@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .question { margin-bottom: 20px; }
+        .options { list-style-type: none; padding: 0; }
+        .options li { margin-bottom: 10px; }
+        .options button { width: 100%; padding: 10px; background: #f0f0f0; border: 1px solid #ccc; cursor: pointer; }
+        .options button:hover { background: #e0e0e0; }
+        .options button.correct { background: #90ee90; }
+        .options button.incorrect { background: #ffcccb; }
+        #score { font-weight: bold; }
+        #next { display: none; margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #next:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Quiz Game</h1>
+    <div id="quiz-container"></div>
+    <button id="next">Next Question</button>
+    <p id="score">Score: 0 / 0</p>
+
+    <script>
+        // Sample questions (you can add more)
+        const questions = [
+    {
+        question: "Which of the following steps of the troubleshooting methodology would most likely include checking through each level of the OSI model after the problem has been identified?",
+        options: ["Establish a theory.", "Implement the solution.", "Create a plan of action.", "Verify functionality."],
+        correct: "Establish a theory."
+    },
+    {
+        question: "While troubleshooting a VoIP handset connection, a technician's laptop is able to successfully connect to network resources using the same port. The technician needs to identify the port on the switch. Which of the following should the technician use to determine the switch and port?",
+        options: ["LLDP", "IKE", "VLAN", "netstat"],
+        correct: "LLDP"
+    },
+    {
+        question: "A network administrator needs to set up a file server to allow user access. The organization uses DHCP to assign IP addresses. Which of the following is the best solution for the administrator to set up?",
+        options: ["A separate scope for the file server using a /32 subnet", "A reservation for the server based on the MAC address", "A static IP address within the DHCP IP range", "A SLAAC for the server"],
+        correct: "A reservation for the server based on the MAC address"
+    },
+    {
+        question: "Which of the following technologies are X.509 certificates most commonly associated with?",
+        options: ["PKI", "VLAN tagging", "LDAP", "MFA"],
+        correct: "PKI"
+    },
+    {
+        question: "A network administrator wants to implement an authentication process for temporary access to an organization's network. Which of the following technologies would facilitate this process?",
+        options: ["Captive portal", "Enterprise authentication", "Ad hoc network", "WPA3"],
+        correct: "Captive portal"
+    },
+    {
+        question: "A user is unable to navigate to a website because the provided URL is not resolving to the correct IP address. Other users are able to navigate to the intended website without issue. Which of the following is most likely causing this issue?",
+        options: ["Hosts file", "Self-signed certificate", "Nameserver record", "IP helper"],
+        correct: "Hosts file"
+    },
+    {
+        question: "A network administrator is planning to host a company application in the cloud, making the application available for all internal and third-party users. Which of the following concepts describes this arrangement?",
+        options: ["Multitenancy", "VPC", "NFV", "SaaS"],
+        correct: "Multitenancy"
+    },
+    {
+        question: "Which of the following should be used to obtain remote access to a network appliance that has failed to start up properly?",
+        options: ["Crash cart", "Jump box", "Secure Shell", "Out-of-band management"],
+        correct: "Out-of-band management"
+    },
+    {
+        question: "Which of the following attacks utilizes a network packet that contains multiple network tags?",
+        options: ["MAC flooding", "VLAN hopping", "DNS spoofing", "ARP poisoning"],
+        correct: "VLAN hopping"
+    },
+    {
+        question: "A network administrator is configuring a new switch and wants to connect two ports to the core switch to ensure redundancy. Which of the following configurations would meet this requirement?",
+        options: ["Full duplex", "802.1Q tagging", "Native VLAN", "Link aggregation"],
+        correct: "Link aggregation"
+    },
+    {
+        question: "Which of the following ports is used for secure email?",
+        options: ["25", "110", "143", "587"],
+        correct: "587"
+    },
+    {
+        question: "A client wants to increase overall security after a recent breach. Which of the following would be best to implement? (Choose two.)",
+        options: ["Least privilege network access", "Dynamic inventories", "Central policy management", "Zero-touch provisioning", "Configuration drift prevention", "Subnet range limits"],
+        correct: ["Least privilege network access", "Central policy management"]
+    },
+    {
+        question: "Which of the following is a cost-effective advantage of a split-tunnel VPN?",
+        options: ["Web traffic is filtered through a web filler.", "More bandwidth is required on the company's internet connection.", "Monitoring detects insecure machines on the company's network.", "Cloud-based traffic flows outside of the company's network."],
+        correct: "Cloud-based traffic flows outside of the company's network."
+    },
+    {
+        question: "A network technician is troubleshooting a web application's poor performance. The office has two internet links that share the traffic load. Which of the following tools should the technician use to determine which link is being used for the web application?",
+        options: ["netstat", "nslookup", "ping", "tracert"],
+        correct: "tracert"
+    },
+    {
+        question: "Which of the following attacks can cause users who are attempting to access a company website to be directed to an entirely different website?",
+        options: ["DNS poisoning", "Denial-of-service", "Social engineering", "ARP spoofing"],
+        correct: "DNS poisoning"
+    },
+    {
+        question: "As part of an attack, a threat actor purposefully overflows the content-addressable memory (CAM) table on a switch. Which of the following types of attacks is this scenario an example of?",
+        options: ["ARP spoofing", "Evil twin", "MAC flooding", "DNS poisoning"],
+        correct: "MAC flooding"
+    },
+    {
+        question: "A company's office has publicly accessible meeting rooms equipped with network ports. A recent audit revealed that visitors were able to access the corporate network by plugging personal laptops into open network ports. Which of the following should the company implement to prevent this in the future?",
+        options: ["URL filters", "VPN", "ACLs", "NAC"],
+        correct: "NAC"
+    },
+    {
+        question: "A user notifies a network administrator about losing access to a remote file server. The network administrator is able to ping the server and verifies the current firewall rules do not block access to the network fileshare. Which of the following tools would help identify which ports are open on the remote file server?",
+        options: ["dig", "nmap", "tracert", "nslookup"],
+        correct: "nmap"
+    },
+    {
+        question: "Which of the following technologies is the best choice to listen for requests and distribute user traffic across web servers?",
+        options: ["Router", "Switch", "Firewall", "Load balancer"],
+        correct: "Load balancer"
+    },
+    {
+        question: "A company is hosting a secure server that requires all connections to the server to be encrypted. A junior administrator needs to harden the web server. The following ports on the web server are open:\n443\n80\n22\n587\nWhich of the following ports should be disabled?",
+        options: ["22", "80", "443", "587"],
+        correct: "80"
+    },
+    {
+        question: "Which of the following is the next step to take after successfully testing a root cause theory?",
+        options: ["Determine resolution steps.", "Duplicate the problem in a lab.", "Present the theory for approval.", "Implement the solution to the problem."],
+        correct: "Determine resolution steps."
+    },
+    {
+        question: "A network administrator is configuring a new switch and wants to ensure that only assigned devices can connect to the switch. Which of the following should the administrator do?",
+        options: ["Configure ACLs.", "Implement a captive portal.", "Enable port security.", "Disable unnecessary services."],
+        correct: "Enable port security."
+    },
+    {
+        question: "A customer needs six usable IP addresses. Which of the following best meets this requirement?",
+        options: ["255.255.255.128", "255.255.255.192", "255.255.255.224", "255.255.255.240"],
+        correct: "255.255.255.240"
+    },
+    {
+        question: "A user reports having intermittent connectivity issues to the company network. The network configuration for the user reveals the following:\nIP address: 192.168.1.10\nSubnet mask: 255.255.255.0\nDefault gateway: 192.168.1.254\nThe network switch shows the following ARP table:\nMAC Address | IP Address | Interface | VLAN\n0c00.1344.0001 | 192.168.1.10 | eth4 | 10\n0c00.1985.210a | 192.168.1.10 | eth5 | 11\n0c00.1298.d239 | 192.168.1.10 | eth6 | 10\n0c00.a291.c113 | 192.168.1.12 | eth7 | 11\n0c00.923b.2391 | 192.168.1.11 | eth8 | 10\nleft.2391.1022 | 192.168.1.254 | eth1 | 10\nWhich of the following is the most likely cause of the user's connection issues?",
+        options: ["A port with incorrect VLAN assigned", "A switch with spanning tree conflict", "Another PC with manually configured IP", "A router with overlapping route tables"],
+        correct: "Another PC with manually configured IP"
+    },
+    {
+        question: "Which of the following is created to illustrate the effectiveness of wireless networking coverage in a building?",
+        options: ["Logical diagram", "Layer 3 network diagram", "Service-level agreement", "Heat map"],
+        correct: "Heat map"
+    },
+    {
+        question: "Which of the following cloud deployment models is most commonly associated with multitenancy and is generally offered by a service provider?",
+        options: ["Private", "Community", "Public", "Hybrid"],
+        correct: "Public"
+    },
+    {
+        question: "A network administrator needs to create an SVI on a Layer 3-capable device to separate voice and data traffic. Which of the following best explains this use case?",
+        options: ["A physical interface used for trunking logical ports", "A physical interface used for management access", "A logical interface used for the routing of VLANs", "A logical interface used when the number of physical ports is insufficient"],
+        correct: "A logical interface used for the routing of VLANs"
+    },
+    {
+        question: "A network administrator is performing a refresh of a wireless environment. As the APs are being placed, they overlap a little bit with each other. Which of the following 2.4GHz channels should be selected to ensure that they do not conflict?",
+        options: ["1, 3, 5", "1, 6, 11", "2, 6, 10", "3, 6, 9"],
+        correct: "1, 6, 11"
+    },
+    {
+        question: "Which of the following network cables involves bouncing light off of protective cladding?",
+        options: ["Twinaxial", "Coaxial", "Single-mode", "Multimode"],
+        correct: "Multimode"
+    },
+    {
+        question: "Which of the following would allow a network administrator to analyze attacks coming from the internet without affecting latency?",
+        options: ["IPS", "IDS", "Load balancer", "Firewall"],
+        correct: "IDS"
+    },
+    {
+        question: "A technician is troubleshooting wireless connectivity near a break room. Whenever a user turns on the microwave, connectivity to the user's laptop is lost. Which of the following frequency bands is the laptop most likely using?",
+        options: ["2.4GHz", "5GHz", "6GHz", "900MHz"],
+        correct: "2.4GHz"
+    },
+    {
+        question: "A network administrator needs to implement routing capabilities in a hypervisor. Which of the following should the administrator most likely implement?",
+        options: ["VPC", "Firewall", "NFV", "IaaS"],
+        correct: "NFV"
+    },
+    {
+        question: "A network technician needs to install patch cords from the UTP patch panel to the access switch for a newly occupied set of offices. The patch panel is not labeled for easy jack identification. Which of the following tools provides the easiest way to identify the appropriate patch panel port?",
+        options: ["Toner", "Laptop", "Cable tester", "Visual fault locator"],
+        correct: "Toner"
+    },
+    {
+        question: "A network administrator received complaints of intermittent network connectivity issues. The administrator investigates and finds that the network design contains potential loop scenarios. Which of the following should the administrator do?",
+        options: ["Enable spanning tree.", "Configure port security.", "Change switch port speed limits.", "Enforce 802.1Q tagging."],
+        correct: "Enable spanning tree."
+    },
+    {
+        question: "Which of the following routing technologies uses a successor and a feasible successor?",
+        options: ["IS-IS", "OSPF", "BGP", "EIGRP"],
+        correct: "EIGRP"
+    },
+    {
+        question: "Which of the following best describes what an organization would use port address translation for?",
+        options: ["VLANs on the perimeter", "Public address on the perimeter router", "Non-routable address on the perimeter router", "Servers on the perimeter"],
+        correct: "Non-routable address on the perimeter router"
+    },
+    {
+        question: "A company is implementing a wireless solution in a high-density environment. Which of the following 802.11 standards is used when a company is concerned about device saturation and coverage?",
+        options: ["802.11ac", "802.11ax", "802.11g", "802.11n"],
+        correct: "802.11ax"
+    },
+    {
+        question: "Which of the following network traffic types is sent to all nodes on the network?",
+        options: ["Unicast", "Broadcast", "Multicast", "Anycast"],
+        correct: "Broadcast"
+    },
+    {
+        question: "Which of the following cable types provides the highest possible transmission speed?",
+        options: ["Plenum", "Ethernet", "Fiber-optic", "DAC"],
+        correct: "Fiber-optic"
+    },
+    {
+        question: "Which of the following layers of the OSI model is responsible for end-to-end encryption?",
+        options: ["Presentation", "Application", "Session", "Transport"],
+        correct: "Presentation"
+    },
+    {
+        question: "A network security administrator needs to monitor the contents of data sent between a secure network and the rest of the company. Which of the following monitoring methods will accomplish this task?",
+        options: ["Port mirroring", "Flow data", "Syslog entries", "SNMP traps"],
+        correct: "Port mirroring"
+    },
+    {
+        question: "Which of the following does a full-tunnel VPN provide?",
+        options: ["Lower bandwidth requirements", "The ability to reset local computer passwords", "Corporate inspection of all network traffic", "Access to blocked sites"],
+        correct: "Corporate inspection of all network traffic"
+    },
+    {
+        question: "Which of the following does a hash provide?",
+        options: ["Non-repudiation", "Integrity", "Confidentiality", "Availability"],
+        correct: "Integrity"
+    },
+    {
+        question: "A company wants to implement a disaster recovery site for non-critical applications, which can tolerate a short period of downtime. Which of the following types of sites should the company implement to achieve this goal?",
+        options: ["Hot", "Cold", "Warm", "Passive"],
+        correct: "Warm"
+    },
+    {
+        question: "Which of the following is an XML-based security concept that works by passing sensitive information about users, such as log-in information and attributes, to providers?",
+        options: ["IAM", "MFA", "RADIUS", "SAML"],
+        correct: "SAML"
+    },
+    {
+        question: "Which of the following routing technologies uses unequal cost load balancing and port 88?",
+        options: ["EIGRP", "BGP", "RIP", "OSPF"],
+        correct: "EIGRP"
+    },
+    {
+        question: "A wireless network consultant is deploying a large number of WAPs and wants to centrally control them from one wireless LAN controller. Which of the following network types should the consultant employ?",
+        options: ["Mesh", "Infrastructure", "Point-to-point", "Ad hoc"],
+        correct: "Infrastructure"
+    },
+    {
+        question: "Which of the following network topologies involves sending all traffic through a single point?",
+        options: ["Mesh", "Hybrid", "Hub-and-spoke", "Point-to-point"],
+        correct: "Hub-and-spoke"
+    },
+    {
+        question: "Which of the following functions is used to prioritize network traffic based on the type of traffic?",
+        options: ["QoS", "VPN", "CDN", "TTL"],
+        correct: "QoS"
+    },
+    {
+        question: "Which of the following most likely determines the size of a rack for installation? (Choose two.)",
+        options: ["KVM size", "Switch depth", "Hard drive size", "Cooling fan speed", "Outlet amperage", "Server height"],
+        correct: ["Switch depth", "Server height"]
+    },
+    {
+        question: "A network administrator is planning to implement device monitoring to enhance network visibility. The security team requires that the solution provides authentication and encryption. Which of the following meets these requirements?",
+        options: ["SIEM", "Syslog", "NetFlow", "SNMPv3"],
+        correct: "SNMPv3"
+    },
+    {
+        question: "A network administrator needs to change where the outside DNS records are hosted. Which of the following records should the administrator change at the registrar to accomplish this task?",
+        options: ["NS", "SOA", "PTR", "CNAME"],
+        correct: "NS"
+    },
+    {
+        question: "A support agent receives a report that a remote user's wired devices are constantly disconnecting and have slow speeds. Upon inspection, the support agent sees that the user's coaxial modem has a signal power of -97dB. Which of the following should the support agent recommend to troubleshoot the issue?",
+        options: ["Removing any splitters connected to the line", "Switching the devices to wireless", "Moving the devices closer to the modem", "Lowering the network speed"],
+        correct: "Removing any splitters connected to the line"
+    },
+    {
+        question: "Which of the following does OSPF use to communicate routing updates?",
+        options: ["Unicast", "Anycast", "Multicast", "Broadcast"],
+        correct: "Multicast"
+    },
+    {
+        question: "A storage network requires reduced overhead and increased efficiency for the amount of data being sent. Which of the following should an engineer most likely configure to meet these requirements?",
+        options: ["Link speed", "Jumbo frames", "QoS", "802.1q tagging"],
+        correct: "Jumbo frames"
+    },
+    {
+        question: "A security administrator is creating a new firewall object for a device with IP address 192.168.100.1/25. However, the firewall software only uses dotted decimal notation in configuration fields. Which of the following is the correct subnet mask to use?",
+        options: ["255.255.254.0", "255.255.255.1", "255.255.255.128", "255.255.255.192"],
+        correct: "255.255.255.128"
+    },
+    {
+        question: "Which of the following disaster recovery metrics describes the average length of time a piece of equipment can be expected to operate normally?",
+        options: ["RPO", "RTO", "MTTR", "MTBF"],
+        correct: "MTBF"
+    },
+    {
+        question: "A network administrator logs on to a router and sees an interface with an IP address of 10.61.52.34 255.255.255.252. Which of the following best describes how this interface IP address is being used?",
+        options: ["As a point-to-point connection", "To connect to the internet", "As a virtual address for redundancy", "For out-of-band management"],
+        correct: "As a point-to-point connection"
+    },
+    {
+        question: "A network technician is troubleshooting a faulty NIC and tests the theory. Which of the following should the technician do next?",
+        options: ["Develop a theory.", "Establish a plan of action.", "Implement the solution.", "Document the findings."],
+        correct: "Establish a plan of action."
+    },
+    {
+        question: "A network administrator is configuring access points for installation in a dense environment where coverage is often overlapping. Which of the following channel widths should the administrator choose to help minimize interference in the 2.4GHz spectrum?",
+        options: ["11MHz", "20MHz", "40MHz", "80MHz", "160MHz"],
+        correct: "20MHz"
+    },
+    {
+        question: "A network manager wants to view network traffic for devices connected to a switch. A network engineer connects an appliance to a free port on the switch and needs to configure the switch port connected to the appliance. Which of the following is the best option for the engineer to enable?",
+        options: ["Trunking", "Port mirroring", "Full duplex", "SNMP"],
+        correct: "Port mirroring"
+    },
+    {
+        question: "A network administrator is in the process of installing 35 PoE security cameras. After the administrator installed and tested the new cables, the administrator installed the cameras. However, a small number of the cameras do not work. Which of the following is the most likely reason?",
+        options: ["Incorrect wiring standard", "Power budget exceeded", "Signal attenuation", "Wrong voltage"],
+        correct: "Power budget exceeded"
+    },
+    {
+        question: "A network administrator is troubleshooting an application issue after a firewall change. The administrator has confirmed that the port and protocol are accessible to the user, but the application is still having issues. Which of the following tools allows the administrator to look at traffic on the application layer of the OSI model?",
+        options: ["ifconfig", "tcpdump", "nslookup", "traceroute"],
+        correct: "tcpdump"
+    },
+    {
+        question: "Which of the following ports should a network administrator enable for encrypted log-in to a network switch?",
+        options: ["22", "23", "80", "123"],
+        correct: "22"
+    },
+    {
+        question: "Which of the following is used to stage copies of a website closer to geographically dispersed users?",
+        options: ["VPN", "CDN", "SAN", "SDN"],
+        correct: "CDN"
+    },
+    {
+        question: "Which of the following appliances provides users with an extended footprint that allows connections from multiple devices within a designated WLAN?",
+        options: ["Router", "Switch", "Access point", "Firewall"],
+        correct: "Access point"
+    },
+    {
+        question: "An administrator is configuring a switch that will be placed in an area of the office that is accessible to customers. Which of the following is the best way for the administrator to mitigate unknown devices from connecting to the network?",
+        options: ["SSE", "ACL", "Perimeter network", "802.1X"],
+        correct: "802.1X"
+    },
+    {
+        question: "Which of the following diagrams would most likely include specifications about fiber connector types?",
+        options: ["Logical", "Physical", "Rack", "Routing"],
+        correct: "Physical"
+    },
+    {
+        question: "Which of the following is the most likely reason an insurance brokerage would enforce VPN usage?",
+        options: ["To encrypt sensitive data in transit", "To secure the endpoints", "To maintain contractual agreements", "To comply with data retention requirements"],
+        correct: "To encrypt sensitive data in transit"
+    },
+    {
+        question: "An organization moved its DNS servers to new IP addresses. After this move, customers are no longer able to access the organization's website. Which of the following DNS entries should be updated?",
+        options: ["AAA", "CNAME", "MX", "NS"],
+        correct: "NS"
+    },
+    {
+        question: "Which of the following are environmental factors that should be considered when installing equipment in a building? (Choose two.)",
+        options: ["Fire suppression system", "UPS location", "Humidity control", "Power load", "Floor construction type", "Proximity to nearest MDF"],
+        correct: ["Fire suppression system", "Humidity control"]
+    },
+    {
+        question: "A customer lost the connection to the telephone system. The administration console is configured with multiple network interfaces and is connected to multiple switches. The network administrator troubleshoots and verifies the following:\nThe support team is able to connect remotely to the administration console.\nRebooting the switch shows solid link and activity lights even on unused ports.\nRebooting the telephone system does not bring the system back online.\nThe console is able to connect directly to individual modules successfully.\nWhich of the following is the most likely reason the customer lost the connection?",
+        options: ["A switch failed.", "The console software needs to be reinstalled.", "The cables to the modules need to be replaced.", "A module failed."],
+        correct: "A switch failed."
+    },
+    {
+        question: "A systems administrator is configuring a new device to be added to the network. The administrator is planning to perform device hardening prior to connecting the device. Which of the following should the administrator do first?",
+        options: ["Update the network ACLs.", "Place the device in a screened subnet.", "Enable content filtering.", "Change the default admin passwords."],
+        correct: "Change the default admin passwords."
+    },
+    {
+        question: "A network administrator needs to connect two network closets that are 492ft (150m) away from each other. Which of the following cable types should the administrator install between the closets?",
+        options: ["Single-mode fiber", "Coaxial", "DAC", "STP"],
+        correct: "Single-mode fiber"
+    },
+    {
+        question: "An IT manager needs to connect ten sites in a mesh network. Each needs to be secured with reduced provisioning time. Which of the following technologies will best meet this requirement?",
+        options: ["SD-WAN", "VXLAN", "VPN", "NFV"],
+        correct: "SD-WAN"
+    },
+    {
+        question: "Which of the following is most likely responsible for the security and handling of personal data in Europe?",
+        options: ["GDPR", "SCADA", "SAML", "PCI DSS"],
+        correct: "GDPR"
+    },
+    {
+        question: "An organization has a security requirement that all network connections can be traced back to a user. A network administrator needs to identify a solution to implement on the wireless network. Which of the following is the best solution?",
+        options: ["Implementing enterprise authentication", "Requiring the use of PSKs", "Configuring a captive portal for users", "Enforcing wired equivalent protection"],
+        correct: "Implementing enterprise authentication"
+    },
+    {
+        question: "A customer is adding fiber connectivity between adjacent buildings. A technician terminates the multimode cable to the fiber patch panel. After the technician connects the fiber patch cable, the indicator light does not tum on. Which of the following should a technician try first to troubleshoot this issue?",
+        options: ["Reverse the fibers.", "Reterminate the fibers.", "Verify the fiber size.", "Examine the cable runs for visual faults."],
+        correct: "Reverse the fibers."
+    },
+    {
+        question: "Users cannot connect to an internal website with an IP address 10.249.3.76. A network administrator runs a command and receives the following output:\n[Tracert output showing hops with increasing times and eventual timeouts, indicating a routing issue.]\nWhich of the following command-line tools is the network administrator using?",
+        options: ["tracert", "netstat", "tcpdump", "nmap"],
+        correct: "tracert"
+    },
+    {
+        question: "After running a Cat 8 cable using passthrough plugs, an electrician notices that connected cables are experiencing a lot of cross talk. Which of the following troubleshooting steps should the electrician take first?",
+        options: ["Inspect the connectors for any wires that are touching or exposed.", "Restore default settings on the connected devices.", "Terminate the connections again.", "Check for radio frequency interference in the area."],
+        correct: "Inspect the connectors for any wires that are touching or exposed."
+    },
+    {
+        question: "A technician is troubleshooting a user's laptop that is unable to connect to a corporate server. The technician thinks the issue pertains to routing. Which of the following commands should the technician use to identify the issue?",
+        options: ["tcpdump", "dig", "tracert", "arp"],
+        correct: "tracert"
+    },
+    {
+        question: "After installing a series of Cat 8 keystones, a data center architect notices higher than normal interference during tests. Which of the following steps should the architect take to troubleshoot the issue?",
+        options: ["Check to see if the end connections were wrapped in copper tape before terminating.", "Use passthrough modular crimping plugs instead of traditional crimping plugs.", "Connect the RX/TX wires to different pins.", "Run a speed test on a device that can only achieve 100Mbps speeds."],
+        correct: "Check to see if the end connections were wrapped in copper tape before terminating."
+    },
+    {
+        question: "A small business is deploying new phones, and some of the phones have full HD videoconferencing features. The Chief Information Officer is concerned that the network might not be able to handle the traffic if the traffic reaches a certain threshold. Which of the following can the network engineer configure to help ease these concerns?",
+        options: ["A VLAN with 100Mbps speed limits", "An IP helper to direct VoIP traffic", "A smaller subnet mask", "Full duplex on all user ports"],
+        correct: "A VLAN with 100Mbps speed limits"
+    },
+    {
+        question: "A virtual machine has the following configuration:\nIPv4 address: 169.254.10.10\nSubnet mask: 255.255.0.0\nThe virtual machine can reach collocated systems but cannot reach external addresses on the internet. Which of the following is most likely the root cause?",
+        options: ["The subnet mask is incorrect.", "The DHCP server is offline.", "The IP address is an RFC1918 private address.", "The DNS server is unreachable."],
+        correct: "The DHCP server is offline."
+    },
+    {
+        question: "Which of the following is used to estimate the average life span of a device?",
+        options: ["RPO", "RTO", "MTTR", "MTBF"],
+        correct: "MTBF"
+    },
+    {
+        question: "Which of the following is the most secure way to provide site-to-site connectivity?",
+        options: ["VXLAN", "IKE", "GRE", "IPSec"],
+        correct: "IPSec"
+    },
+    {
+        question: "A network technician is terminating a cable to a fiber patch panel in the MDF. Which of the following connector types is most likely in use?",
+        options: ["F-type", "RJ11", "BNC", "SC"],
+        correct: "SC"
+    },
+    {
+        question: "A network administrator is connecting two Layer 2 switches in a network. These switches must transfer data in multiple networks. Which of the following would fulfill this requirement?",
+        options: ["Jumbo frames", "802.1Q tagging", "Native VLAN", "Link aggregation"],
+        correct: "802.1Q tagging"
+    },
+    {
+        question: "A network administrator wants users to be able to authenticate to the corporate network using a port-based authentication framework when accessing both wired and wireless devices. Which of the following is the best security feature to accomplish this task?",
+        options: ["802.1X", "Access control list", "Port security", "MAC filtering"],
+        correct: "802.1X"
+    },
+    {
+        question: "Which of the following is most closely associated with a dedicated link to a cloud environment and may not include encryption?",
+        options: ["Direct Connect", "Internet gateway", "Captive portal", "VPN"],
+        correct: "Direct Connect"
+    },
+    {
+        question: "A systems administrator is investigating why users cannot reach a Linux web server with a browser but can ping the server IP. The server is online, the web server process is running, and the link to the switch is up. Which of the following commands should the administrator run on the server first?",
+        options: ["traceroute", "netstat", "tcpdump", "arp"],
+        correct: "netstat"
+    },
+    {
+        question: "Which of the following devices can operate in multiple layers of the OSI model?",
+        options: ["Hub", "Switch", "Transceiver", "Modem"],
+        correct: "Switch"
+    },
+    {
+        question: "Before using a guest network, an administrator requires users to accept the terms of use. Which of the following is the best way to accomplish this goal?",
+        options: ["Pre-shared key", "Autonomous access point", "Captive portal", "WPA2 encryption"],
+        correct: "Captive portal"
+    },
+        {
+        question: "Which of the following most likely requires the use of subinterfaces?",
+        options: ["A router with only one available LAN port", "A firewall performing deep packet inspection", "A hub utilizing jumbo frames", "A switch using Spanning Tree Protocol"],
+        correct: "A router with only one available LAN port"
+    },
+    {
+        question: "A company receives a cease-and-desist order from its ISP regarding prohibited torrent activity. Which of the following should be implemented to comply with the cease-and-desist order?",
+        options: ["MAC security", "Content filtering", "Screened subnet", "Perimeter network"],
+        correct: "Content filtering"
+    },
+    {
+        question: "Which of the following requires network devices to be managed using a different set of IP addresses?",
+        options: ["Console", "Split tunnel", "Jump box", "Out of band"],
+        correct: "Out of band"
+    },
+    {
+        question: "A network administrator wants to configure a backup route in case the primary route fails. A dynamic routing protocol is not installed on the router. Which of the following routing features should the administrator choose to accomplish this task?",
+        options: ["Neighbor adjacency", "Link state flooding", "Administrative distance", "Hop count"],
+        correct: "Administrative distance"
+    },
+    {
+        question: "Which of the following steps of the troubleshooting methodology should a technician take to confirm a theory?",
+        options: ["Duplicate the problem.", "Identify the symptoms.", "Gather information.", "Determine any changes."],
+        correct: "Duplicate the problem."
+    },
+    {
+        question: "A network administrator is deploying a new switch and wants to make sure that the default priority value was set for a spanning tree. Which of the following values would the network administrator expect to see?",
+        options: ["4096", "8192", "32768", "36684"],
+        correct: "32768"
+    },
+    {
+        question: "A network administrator is configuring a wireless network with an ESSID. Which of the following is a user benefit of ESSID compared to SSID?",
+        options: ["Stronger wireless connection", "Roaming between access points", "Advanced security", "Increased throughput"],
+        correct: "Roaming between access points"
+    },
+    {
+        question: "A network administrator needs to connect two routers in a point-to-point configuration and conserve IP space. Which of the following subnets should the administrator use?",
+        options: ["/24", "/26", "/28", "/30"],
+        correct: "/30"
+    },
+    {
+        question: "An attacker follows an employee through a badge-secured door before the door closes. Which of the following types of attacks is occurring?",
+        options: ["Shoulder surfing", "Tailgating", "Phishing", "On-path"],
+        correct: "Tailgating"
+    },
+    {
+        question: "A research facility is expecting to see an exponential increase in global network traffic in the near future. The offices are equipped with 2.5Gbps fiber connections from the ISP, but the facility is currently only utilizing 1Gbps connections. Which of the following would need to be configured in order to use the ISP's connection speed?",
+        options: ["802.1Q tagging", "Network address translation", "Port duplex", "Link aggregation"],
+        correct: "Link aggregation"
+    },
+    {
+        question: "A VoIP phone is plugged in to a port but cannot receive calls. Which of the following needs to be done on the port to address the issue?",
+        options: ["Trunk all VLANs on the port.", "Configure the native VLAN.", "Tag the traffic to voice VLAN.", "Disable VLANs."],
+        correct: "Tag the traffic to voice VLAN."
+    },
+    {
+        question: "Which of the following can support a jumbo frame?",
+        options: ["Access point", "Bridge", "Hub", "Switch"],
+        correct: "Switch"
+    },
+    {
+        question: "A network manager wants to implement a SIEM system to correlate system events. Which of the following protocols should the network manager verify?",
+        options: ["NTP", "DNS", "LDAP", "DHCP"],
+        correct: "NTP"
+    },
+    {
+        question: "A network engineer is designing a secure communication link between two sites. The entire data stream needs to remain confidential. Which of the following will achieve this goal?",
+        options: ["GRE", "IKE", "ESP", "AH"],
+        correct: "ESP"
+    },
+    {
+        question: "Which of the following protocols has a default administrative distance value of 90?",
+        options: ["RIP", "EIGRP", "OSPF", "BGP"],
+        correct: "EIGRP"
+    },
+    {
+        question: "An office is experiencing intermittent connection issues. A network engineer identifies that the issue occurs whenever someone uses the fax machine that is connected to a switch. Which of the following should the engineer do first to resolve the issue?",
+        options: ["Run a new Cat 5 line.", "Enable 802.1Q tagging.", "Change the MTU.", "Configure a VLAN."],
+        correct: "Configure a VLAN."
+    },
+    {
+        question: "A network engineer receives a vendor alert regarding a vulnerability in a router CPU. Which of the following should the engineer do to resolve the issue?",
+        options: ["Update the firmware.", "Replace the system board.", "Patch the OS.", "Isolate the system."],
+        correct: "Update the firmware."
+    },
+    {
+        question: "Which of the following fiber connector types is the most likely to be used on a network interface card?",
+        options: ["LC", "SC", "ST", "MPO"],
+        correct: "LC"
+    },
+    {
+        question: "Which of the following connectors provides console access to a switch?",
+        options: ["ST", "RJ45", "BNC", "SFP"],
+        correct: "RJ45"
+    },
+    {
+        question: "A network administrator notices interference with industrial equipment in the 2.4GHz range. Which of the following technologies would most likely mitigate this issue? (Choose two.)",
+        options: ["Mesh network", "5GHz frequency", "Omnidirectional antenna", "Non-overlapping channel", "Captive portal", "Ad hoc network"],
+        correct: ["5GHz frequency", "Non-overlapping channel"]
+    },
+    {
+        question: "Which of the following network topologies contains a direct connection between every node in the network?",
+        options: ["Mesh", "Star", "Hub-and-spoke", "Point-to-point"],
+        correct: "Mesh"
+    },
+    {
+        question: "A network architect needs to create a wireless field network to provide reliable service to public safety vehicles. Which of the following types of networks is the best solution?",
+        options: ["Mesh", "Ad hoc", "Point-to-point", "Infrastructure"],
+        correct: "Mesh"
+    },
+    {
+        question: "A manager is evaluating the environmental design of a data center. Which of the following setups should the manager implement if the maximum thermal dissipation is the highest concern?",
+        options: ["A blue-green", "A hot-cold", "An east-west", "An active-passive"],
+        correct: "A hot-cold"
+    },
+    {
+        question: "A network administrator configured a router interface as 10.0.0.95 255.255.255.240. The administrator discovers that the router is not routing packets to a web server with IP 10.0.0.81/28. Which of the following is the best explanation?",
+        options: ["The web server is in a different subnet.", "The router interface is a broadcast address.", "The IP address space is a class A network.", "The subnet is in a private address space."],
+        correct: "The router interface is a broadcast address."
+    },
+    {
+        question: "A network administrator is notified that a user cannot access resources on the network. The network administrator checks the physical connections to the workstation labeled User 3 and sees the Ethernet is properly connected. However, the network interface’s indicator lights are not blinking on either the computer or the switch. Which of the following is the most likely cause?",
+        options: ["The switch failed.", "The default gateway is wrong.", "The port is shut down.", "The VLAN assignment is incorrect."],
+        correct: "The port is shut down."
+    },
+    {
+        question: "Which of the following internal routing protocols is best characterized as having fast convergence and being loop-free?",
+        options: ["BGP", "STP", "OSPF", "RIP"],
+        correct: "OSPF"
+    },
+    {
+        question: "An administrator is setting up an SNMP server for use in the enterprise network and needs to create device IDs within a MIB. Which of the following describes the function of a MIB?",
+        options: ["DHCP relay device", "Policy enforcement point", "Definition file for event translation", "Network access controller"],
+        correct: "Definition file for event translation"
+    },
+    {
+        question: "A critical infrastructure switch is identified as end-of-support. Which of the following is the best next step to ensure security?",
+        options: ["Apply the latest patches and bug fixes.", "Decommission and replace the switch.", "Ensure the current firmware has no issues.", "Isolate the switch from the network."],
+        correct: "Decommission and replace the switch."
+    },
+    {
+        question: "A company's marketing team created a new application and would like to create a DNS record for newapplication.comptia.org that always resolves to the same address as www.comptia.org. Which of the following records should the administrator use?",
+        options: ["SOA", "MX", "CNAME", "NS"],
+        correct: "CNAME"
+    },
+    {
+        question: "A network administrator wants to implement security zones in the corporate network to control access to only individuals inside of the corporation. Which of the following security zones is the best solution?",
+        options: ["Extranet", "Trusted", "VPN", "Public"],
+        correct: "Trusted"
+    },
+    {
+        question: "Which of the following network devices converts wireless signals to electronic signals?",
+        options: ["Router", "Firewall", "Access point", "Load balancer"],
+        correct: "Access point"
+    },
+    {
+        question: "A network administrator deployed wireless networking in the office area. When users visit the outdoor patio and try to download emails with large attachments or stream training videos, they notice buffering issues. Which of the following is the most likely cause?",
+        options: ["Network congestion", "Wireless interference", "Signal degradation", "Client disassociation"],
+        correct: "Signal degradation"
+    },
+    {
+        question: "Which of the following activities would have groups from different departments evaluate the disaster recovery process?",
+        options: ["Validation test", "SLA alignment", "Tabletop exercises", "Active-active approach"],
+        correct: "Tabletop exercises"
+    },
+    {
+        question: "Which of the following routing protocols uses an autonomous system number?",
+        options: ["IS-IS", "OSPF", "BGP", "EIGRP"],
+        correct: "BGP"
+    },
+    {
+        question: "Which of the following is a characteristic of the application layer?",
+        options: ["It relies upon other layers for packet delivery.", "It checks independently for packet loss.", "It encrypts data in transit.", "It performs address translation."],
+        correct: "It relies upon other layers for packet delivery."
+    },
+    {
+        question: "Which of the following IP transmission types encrypts all of the transmitted data?",
+        options: ["ESP", "AH", "GRE", "UDP", "TCP"],
+        correct: "ESP"
+    },
+    {
+        question: "Which of the following should be configured so users can authenticate to a wireless network using company credentials?",
+        options: ["SSO", "SAML", "MFA", "RADIUS"],
+        correct: "RADIUS"
+    },
+    {
+        question: "A network engineer performed a migration to a new mail server. The engineer changed the MX record, verified the change was accurate, and confirmed the new mail server was reachable via the IP address in the A record. However, users are not receiving email. Which of the following should the engineer have done to prevent the issue from occurring?",
+        options: ["Change the email client configuration to match the MX record.", "Reduce the TTL record prior to the MX record change.", "Perform a DNS zone transfer prior to the MX record change.", "Update the NS record to reflect the IP address change."],
+        correct: "Reduce the TTL record prior to the MX record change."
+    },
+    {
+        question: "Which of the following should a network administrator configure when adding OT devices to an organization's architecture?",
+        options: ["Honeynet", "Data-at-rest encryption", "Time-based authentication", "Network segmentation"],
+        correct: "Network segmentation"
+    },
+    {
+        question: "To reduce costs and increase mobility, a Chief Technology Officer (CTO) wants to adopt cloud services for the organization and its affiliates. To reduce the impact for users, the CTO wants key services to run from the on-site data center and enterprise services to run in the cloud. Which of the following deployment models is the best choice for the organization?",
+        options: ["Public", "Hybrid", "SaaS", "Private"],
+        correct: "Hybrid"
+    },
+    {
+        question: "Which of the following is used to describe the average duration of an outage for a specific service?",
+        options: ["RPO", "MTTR", "RTO", "MTBF"],
+        correct: "MTTR"
+    },
+    {
+        question: "A network engineer is setting up a new VoIP network for a customer. The current network is segmented only for computers and servers. No additional switch ports can be used in the new network. Which of the following does the engineer need to do to configure the network correctly? (Choose two.)",
+        options: ["Change network translation definitions.", "Enable 802.1Q.", "Implement a routing protocol.", "Set up voice VLANs.", "Reconfigure the DNS.", "Place devices in the perimeter network."],
+        correct: ["Enable 802.1Q.", "Set up voice VLANs."]
+    },
+    {
+        question: "A network rack has four servers and four switches with dual power supplies. Only one intelligent PDU is installed in the rack. Which of the following is the reason to add a second PDU?",
+        options: ["Power redundancy", "Failed PSU monitoring", "Surge protection", "Electricity conservation"],
+        correct: "Power redundancy"
+    },
+    {
+        question: "Which of the following allows a user to connect to an isolated device on a stand-alone network?",
+        options: ["Jump box", "API gateway", "Secure Shell", "Clientless VPN"],
+        correct: "Jump box"
+    },
+    {
+        question: "Early in the morning, an administrator installs a new DHCP server. In the afternoon, some users report they are experiencing network outages. Which of the following is the most likely issue?",
+        options: ["The administrator did not provision enough IP addresses.", "The administrator configured an incorrect default gateway.", "The administrator did not provision enough routes.", "The administrator did not provision enough MAC addresses."],
+        correct: "The administrator did not provision enough IP addresses."
+    },
+    {
+        question: "A company is implementing a policy that will not allow employees to bring personal devices to the office and connect to the wireless network. Which of the following is the best way to enforce this policy?",
+        options: ["MAC filtering", "802.1X", "Port security", "ACL"],
+        correct: "802.1X"
+    },
+    {
+        question: "A network engineer is troubleshooting an issue with a VoIP network. After performing analysis, the engineer found that when users upload large files, voice quality is severely degraded. When no other traffic is on the network, voice quality is fine. Which of the following should the engineer do to most likely resolve the issue?",
+        options: ["Enable MAC filtering.", "Reduce the VLAN database.", "Configure QoS on the router.", "Implement ACLs."],
+        correct: "Configure QoS on the router."
+    },
+    {
+        question: "Which of the following disaster recovery metrics is used to describe the amount of data that is lost since the last backup?",
+        options: ["MTTR", "RTO", "RPO", "MTBF"],
+        correct: "RPO"
+    },
+    {
+        question: "A network administrator needs to improve network monitoring. Which of the following should the administrator do first?",
+        options: ["Establish baseline metrics.", "Implement a SIEM.", "Perform regular packet captures.", "Conduct availability monitoring."],
+        correct: "Establish baseline metrics."
+    },
+    {
+        question: "A network administrator is troubleshooting issues with a DHCP server at a university. More students have recently arrived on campus, and the users are unable to obtain an IP address. Which of the following should the administrator do to address the issue?",
+        options: ["Enable IP helper.", "Change the subnet mask.", "Increase the scope size.", "Add address exclusions."],
+        correct: "Increase the scope size."
+    },
+    {
+        question: "Which of the following is designed to distribute network traffic among devices based on the quantity of traffic?",
+        options: ["Load balancer", "Router", "Proxy", "Switch"],
+        correct: "Load balancer"
+    },
+    {
+        question: "A user recently moved a workstation to a different part of the office. The user is able to access the internet and print but is unable to access server resources. Which of the following is the most likely cause of the issue?",
+        options: ["Incorrect default gateway", "Wrong VLAN assignment", "Error-disabled port", "Duplicate IP address"],
+        correct: "Wrong VLAN assignment"
+    },
+    {
+        question: "A technician is planning an equipment installation into a rack in a data center that practices hot aisle/cold aisle ventilation. Which of the following directions should the equipment exhaust face when installed in the rack?",
+        options: ["Sides", "Top", "Front", "Rear"],
+        correct: "Rear"
+    },
+    {
+        question: "A network administrator needs to add 255 useable IP addresses to the network. A /24 is currently in use. Which of the following prefixes would fulfill this need?",
+        options: ["/23", "/25", "/29", "/32"],
+        correct: "/23"
+    },
+    {
+        question: "Which of the following allows an organization to map multiple internal devices to a single external-facing IP address?",
+        options: ["NAT", "BGP", "OSPF", "FHRP"],
+        correct: "NAT"
+    },
+    {
+        question: "Which of the following steps in the troubleshooting methodology includes checking logs for recent changes?",
+        options: ["Identify the problem.", "Document the findings and outcomes.", "Test the theory to determine cause.", "Establish a plan of action."],
+        correct: "Identify the problem."
+    },
+    {
+        question: "Which of the following configurations exempts traffic to the internet from traversing a VPN?",
+        options: ["Client-to-site", "Active-passive", "Split-tunnel", "Out-of-band"],
+        correct: "Split-tunnel"
+    },
+    {
+        question: "Which of the following ports creates a secure connection to a directory service?",
+        options: ["22", "389", "445", "636"],
+        correct: "636"
+    },
+    {
+        question: "A network engineer configures a new switch and connects it to an existing switch for expansion and redundancy. Users immediately lose connectivity to the network. The network engineer notes the following spanning tree information from both switches.\n\nSwitch1\nPort | State | Cost\n1 | Forward | 2\n2 | Forward | 2\n\nSwitch2\nPort | State | Cost\n1 | Forward | 2\n2 | Forward | 2\n\nWhich of the following best describes the issue?",
+        options: ["The port cost should not be equal.", "The ports should use link aggregation.", "A root bridge needs to be identified.", "The switch should be configured for RSTP."],
+        correct: "A root bridge needs to be identified."
+    },
+    {
+        question: "A network administrator is implementing security zones for each department. Which of the following should the administrator use to accomplish this task?",
+        options: ["ACLs", "Port security", "Content filtering", "NAC"],
+        correct: "ACLs"
+    },
+    {
+        question: "Which of the following protocols is used to route traffic on the public internet?",
+        options: ["BGP", "OSPF", "EIGRP", "RIP"],
+        correct: "BGP"
+    },
+    {
+        question: "Which of the following protocols provides remote access utilizing port 22?",
+        options: ["SSH", "Telnet", "TLS", "RDP"],
+        correct: "SSH"
+    },
+    {
+        question: "After changes were made to a firewall, users are no longer able to access a web server. A network administrator wants to ensure that ports 80 and 443 on the web server are still accessible from the user IP space. Which of the following commands is best suited to perform this testing?",
+        options: ["dig", "ifconfig", "ping", "nmap"],
+        correct: "nmap"
+    },
+    {
+        question: "Which of the following attacks would most likely cause duplicate IP addresses in a network?",
+        options: ["Rogue DHCP server", "DNS poisoning", "Social engineering", "Denial-of-service"],
+        correct: "Rogue DHCP server"
+    },
+    {
+        question: "An organization wants better network visibility. The organization's requirements include:\n• Multivendor/OS-monitoring capabilities\n• Real-time collection\n• Data correlation\n\nWhich of the following meets these requirements?",
+        options: ["SNMP", "SIEM", "Nmap", "Syslog"],
+        correct: "SIEM"
+    },
+    {
+        question: "An administrator is evaluating the use of authentication within SNMP. Which of the following is the most secure way of authenticating devices using only SNMP?",
+        options: ["Use version 1 of SNMP and use a community string to serve as a PSK", "Use version 3 of SNMP and set up trap messages for critical events on the network", "Use version 2c of SNMP and use informs to validate device authentication", "Use version 2u of SNMP to authenticate devices for network monitoring"],
+        correct: "Use version 3 of SNMP and set up trap messages for critical events on the network"
+    },
+    {
+        question: "A company has observed increased user traffic to gambling websites and would like to limit this behavior on work computers. Which of the following should the company most likely implement?",
+        options: ["ACLs", "Content filter", "Port security", "Screened subnet"],
+        correct: "Content filter"
+    },
+    {
+        question: "Following a fire in a data center, the cabling was replaced. Soon after an administrator notices network issues. Which of the following are the most likely causes of the network issues? (Choose two.)",
+        options: ["The switches are not the correct voltage", "The HVAC system was not verified as fully functional after the fire", "The VLAN database was not deleted before the equipment was brought back online", "The RJ45 cables were replaced with unshielded cables", "The wrong transceiver type was used for the new termination", "The new RJ45 cables are a higher category than the old ones"],
+        correct: ["The RJ45 cables were replaced with unshielded cables", "The wrong transceiver type was used for the new termination"]
+    },
+    {
+        question: "Cloud computing has the capability to meet increased and decreased demands for computing infrastructure for a short period of time. Which of the following best describes this characteristic?",
+        options: ["Efficiency", "Elasticity", "Multitenancy", "Scalability"],
+        correct: "Elasticity"
+    },
+    {
+        question: "Which of the following can also provide a security feature when implemented?",
+        options: ["NAT", "BGP", "FHRP", "EIGRP"],
+        correct: "NAT"
+    },
+    {
+        question: "Which of the following best describes the transmission format that occurs at the transport layer over connectionless communication?",
+        options: ["Datagram", "Segment", "Frames", "Packets"],
+        correct: "Datagram"
+    },
+    {
+        question: "Which of the following is most likely to work with an FC connection and offers more scalability?",
+        options: ["DAS", "SAN", "SSE", "NAS"],
+        correct: "SAN"
+    },
+    {
+        question: "A company has moved to a hybrid cloud model. As part of this move the mail server will be moved to the cloud. The systems administrator needs to ensure the mail server continues to receive email. Which of the following types of DNS records should the systems administrator update?",
+        options: ["NS", "PTR", "MX", "A"],
+        correct: "MX"
+    },
+    {
+        question: "A network engineer is configuring network ports in a public office. To increase security, the engineer wants the ports to allow network connections only after authentication. Which of the following security features should the engineer use?",
+        options: ["Port security", "802.1X", "MAC filtering", "Access control list"],
+        correct: "802.1X"
+    },
+    {
+        question: "A new network administrator is expanding a network and wants to ensure no unauthorized redundant links are present. Which of the following should the administrator use to identify and block redundant links?",
+        options: ["SDN", "STP", "LLDP", "OSPF"],
+        correct: "STP"
+    },
+    {
+        question: "A network administrator notices uncommon communication between VMs on ephemeral ports on the same subnet. The administrator is concerned about that traffic moving laterally within the network. Which of the following describes the type of traffic flow the administrator is analyzing?",
+        options: ["East-west", "Point-to-point", "Horizontal-scaling", "Hub-and-spoke"],
+        correct: "East-west"
+    },
+    {
+        question: "Which of the following would be violated if an employee accidentally deleted a customer's data?",
+        options: ["Integrity", "Confidentiality", "Vulnerability", "Availability"],
+        correct: "Availability"
+    },
+    {
+        question: "A network engineer is now in charge of all SNMP management in the organization. The engineer must use a SNMP version that does not utilize plaintext data. Which of the following is the minimum version of SNMP that supports this requirement?",
+        options: ["v1", "v2c", "v2u", "v3"],
+        correct: "v3"
+    },
+    {
+        question: "A company recently acquired a number of sites and no documentation was provided. A network administrator needs to identify and document all of the digital assets in use. Which of the following is the best method for the administrator to use?",
+        options: ["Availability monitoring", "Packet capture", "Physical inventory", "Network discovery"],
+        correct: "Network discovery"
+    },
+    {
+        question: "A network administrator recently upgraded a wireless infrastructure with new APs. Users are reporting that, when stationary, the wireless connection drops and reconnects after 20 to 30 seconds. While reviewing the logs, the administrator notices that the APs are changing channels. Which of the following is the most likely reason for the service interruptions?",
+        options: ["Channel interference", "Roaming misconfiguration", "Network congestion", "Insufficient wireless coverage"],
+        correct: "Channel interference"
+    },
+    {
+        question: "A network administrator needs to set up a multicast network for audio and video broadcasting. Which of the following networks would be the most appropriate for this application?",
+        options: ["172.16.0.0/24", "192.168.0.0/24", "224.0.0.0/24", "240.0.0.0/24"],
+        correct: "224.0.0.0/24"
+    },
+    {
+        question: "A user connects to a corporate VPN via a web browser and is able to use TLS to access the internal financial system to input a time card. Which of the following best describes how the VPN is being used?",
+        options: ["Clientless", "Client-to-site", "Full tunnel", "Site-to-site"],
+        correct: "Clientless"
+    },
+    {
+        question: "A network administrator needs to fail over services to an off-site environment. This process will take four weeks to become fully operational. Which of the following DR concepts does this describe?",
+        options: ["Hot site", "Warm site", "Cold site", "Active-active approach"],
+        correct: "Cold site"
+    },
+    {
+        question: "A security analyst wants to control internet access based on site reputation and categorization. The analyst needs a solution that does not require traffic flow changes. Which of the following solutions would most likely meet these requirements?",
+        options: ["Proxy", "DNS filtering", "Router ACL", "Load balancer"],
+        correct: "DNS filtering"
+    },
+    {
+        question: "A wireless technician wants to implement a technology that will allow user devices to automatically navigate to the best available frequency standard. Which of the following technologies should the technician use?",
+        options: ["Band steering", "Wireless LAN controller", "Directional antenna", "Autonomous access point"],
+        correct: "Band steering"
+    },
+    {
+        question: "A user called the help desk after business hours to complain that files on a device are inaccessible and the wallpaper was changed. The network administrator thinks that this issue is an isolated incident, but the security analyst thinks the issue might be a ransomware attack. Which of the following troubleshooting steps should be taken first?",
+        options: ["Identify the problem.", "Establish a theory.", "Document findings.", "Create a plan of action."],
+        correct: "Identify the problem."
+    },
+    {
+        question: "A data center interconnect using a VXLAN was recently implemented. A network engineer observes slow performance and fragmentation on the interconnect. Which of the following technologies will resolve the issue?",
+        options: ["802.1Q tagging", "Spanning tree", "Link aggregation", "Jumbo frames"],
+        correct: "Jumbo frames"
+    },
+    {
+        question: "A new server is deployed in a trusted zone and is validated to be online with all appropriate services running. However, users in a perimeter network cannot access the server. Which of the following should a network administrator do to resolve the reported issue?",
+        options: ["Create a TXT record on the DNS server for the new server.", "Update the firewall ACL to allow access to the new server.", "Configure a static route for the user VLAN to the new server.", "Insert a static ARP entry for the new server on the Layer 3 switch."],
+        correct: "Update the firewall ACL to allow access to the new server."
+    },
+    {
+        question: "Network administrators are using the Telnet protocol to administer network devices that are on the 192.168.1.0/24 subnet. Which of the following tools should the administrator use to best identify the devices?",
+        options: ["dig", "nmap", "tracert", "telnet"],
+        correct: "nmap"
+    },
+    {
+        question: "A network administrator recently updated configurations on a Layer 3 switch. Following the updates, users report being unable to reach a specific file server. Which of the following is the most likely cause?",
+        options: ["Incorrect ACLs", "Switching loop", "Duplicate IP addresses", "Wrong default route"],
+        correct: "Incorrect ACLs"
+    },
+    {
+        question: "A network engineer wants to implement a solution where all web servers will send event data over port 514. Which of the following services will accomplish this task?",
+        options: ["Syslog", "SMTP", "DNS", "DHCP"],
+        correct: "Syslog"
+    },
+    {
+        question: "A security administrator wants to discover zero-day attacks before they can be used on the company's network. Which of the following can the administrator use to accomplish this task?",
+        options: ["Central repository", "Honeypot", "Next-generation firewall", "Evil twin"],
+        correct: "Honeypot"
+    },
+    {
+        question: "Users at a satellite office are experiencing issues when using videoconferencing. Which of the following should a technician focus on first to rectify these issues?",
+        options: ["Quality of service", "Network signal", "Time to live", "Load balancing"],
+        correct: "Network signal"
+    },
+    {
+        question: "A network administrator is trying to locate the switch interface a PC is connected to. The administrator accesses the local switch, pings the PC IP address, and then uses the command show arp. Which of the following commands should the administrator use next?",
+        options: ["show route", "show mac-address-table", "show vlan", "show interface"],
+        correct: "show mac-address-table"
+    },
+    {
+        question: "A user attempts to log in to a corporate website by utilizing a shortcut. The shortcut has been used many times before. The user then notices some discrepancies on the company website. Which of the following is most likely the reason for this issue?",
+        options: ["VLAN hopping", "ARP spoofing", "DNS poisoning", "MAC flooding"],
+        correct: "DNS poisoning"
+    },
+    {
+        question: "Which of the following is the correct order of components in a bottom-up approach for the three-tier hierarchical model?",
+        options: ["Access, distribution, and core", "Core, root, and distribution", "Core, spine, and leaf", "Access, core, and root"],
+        correct: "Access, distribution, and core"
+    },
+    {
+        question: "A client with a 2.4GHz wireless network has stated that the entire office is experiencing intermittent issues with laptops after the WAP was moved. Which of the following is the most likely reason for these issues?",
+        options: ["The network uses a non-overlapping channel.", "The signal is reflecting too much.", "The network has excessive noise.", "A microwave is in the office."],
+        correct: "A microwave is in the office."
+    },
+    {
+        question: "Which of the following SD-WAN features allows a router to be shipped directly to the installation site and does not require site-level configuration?",
+        options: ["Zero-touch provisioning", "Application aware", "Transport agnostic", "Central policy management"],
+        correct: "Zero-touch provisioning"
+    },
+    {
+        question: "A network technician is troubleshooting network latency and has determined the issue to be occurring between two network switches (Switch10 and Switch11). Symptoms reported include poor video performance and slow file copying. Given the following information:\n\nSwitch10 \"show interfaces\" output:\nMTU 1600 bytes, Speed 1000/full, VLAN10\n12912 packets input, 2398471 bytes, 0 runts, 0 giants\n19328 packets output, 9832994 bytes, 0 runts, 0 giants\n\nSwitch11 \"show interfaces\" output:\nMTU 1500 bytes, Speed Auto Negotiate, VLAN10\n19328 packets input, 9832984 bytes, 0 runts, 2394 giants\n12912 packets output, 2398471 bytes, 0 runts, 0 giants\n\nWhich of the following should the technician most likely do to resolve the issue?",
+        options: ["Disable automatic negotiation on Switch11.", "Modify Switch10 MTU value to 1500.", "Configure STP on both switches.", "Change the native VLAN on the ports."],
+        correct: "Modify Switch10 MTU value to 1500."
+    },
+    {
+        question: "Which of the following types of routes will take precedence when building a routing table for a given subnet?",
+        options: ["Static", "BGP", "OSPF", "Default"],
+        correct: "Static"
+    },
+    {
+        question: "Which of the following steps in the troubleshooting methodology comes after using a top-to-bottom examination of the OSI model to determine cause?",
+        options: ["Test the theory.", "Establish a plan of action.", "Verify full system functionality.", "Identify the problem."],
+        correct: "Test the theory."
+    },
+    {
+        question: "Which of the following would an adversary do while conducting an evil twin attack?",
+        options: ["Trick users into using an AP with an SSID that is identical to a legitimate network.", "Manipulate address resolution to point devices to a malicious endpoint.", "Present an identical MAC to gain unauthorized access to network resources.", "Capture data in transit between two legitimate endpoints to steal data."],
+        correct: "Trick users into using an AP with an SSID that is identical to a legitimate network."
+    },
+    {
+        question: "An ISP provided a company with an IP range of 98.174.235.142/28. A network technician configured a router with a subnet mask of 255.255.255.224 and default gateway of 98.174.235.129. After the configuration was set up. the company is unable to connect to the ISP. Which of the following would resolve this issue?",
+        options: ["Change the subnet mask to .240.", "Change the Ethernet cable from the external interface to the modem.", "Change the CIDR to /29.", "Change the static IP to 98.174.235.128/28."],
+        correct: "Change the subnet mask to .240."
+    },
+    {
+        question: "A network administrator is troubleshooting a connection between two switches that is experiencing intermittent errors. The administrator needs to determine which port on the remote switch the faulty cable is connected to. Which of the following is the best tool to use to identify the error?",
+        options: ["tracert", "LLDP run", "nmap", "ping"],
+        correct: "LLDP run"
+    },
+    {
+        question: "Which of the following is a difference between EOL and EOS?",
+        options: ["EOL discontinues the product but may offer support.", "EOS replaces free support with a subscription model.", "EOS only applies to physical products.", "EOL still guarantees warranty service."],
+        correct: "EOL discontinues the product but may offer support."
+    },
+    {
+        question: "A network architect is implementing an off-premises computing facility and needs to ensure that operation will not be impacted by major outages. Which of the following should the architect consider?",
+        options: ["Hot site", "DCI", "Direct Connect", "Active-passive approach"],
+        correct: "Hot site"
+    },
+    {
+        question: "A network engineer implements a DNS filter on the firewall to block users from visiting malicious websites. Which of the following should the engineer complete to resolve the issue?",
+        options: ["Enable a PTR record.", "Update the existing TXT record.", "Add a new AAA record.", "Configure a secondary NS record."],
+        correct: "Add a new AAA record."
+    },
+    {
+        question: "A small coffee shop wants to set up multiple 2.4GHz wireless access points. The access points will support a large number of users, and the network technician wants to mitigate interference as much as possible. Which of the following is the number of 22MHz channels that the equipment can support?",
+        options: ["1", "2", "3", "4"],
+        correct: "3"
+    },
+    {
+        question: "A company is purchasing a 40Gbps broadband connection service from an ISP. Which of the following should most likely be configured on the 10G switch to take advantage of the new service?",
+        options: ["802.1Q tagging", "Jumbo frames", "Half duplex", "Link aggregation"],
+        correct: "Link aggregation"
+    },
+    {
+        question: "Which of the following are the main differences between ESP and AH? (Choose two.)",
+        options: ["AH provides confidentiality through the use of encryption.", "ESP provides authentication for IP headers and their payloads.", "ESP provides confidentiality through the use of encryption.", "AH provides authentication for IP headers and their payloads.", "AH provides data origin authorization over shared secret.", "ESP provides data origin authorization over shared secret."],
+        correct: ["ESP provides confidentiality through the use of encryption.", "AH provides authentication for IP headers and their payloads."]
+    },
+    {
+        question: "An organization wants to ensure that incoming emails were sent from a trusted source. Which of the following DNS records is used to verify the source?",
+        options: ["TXT", "AAA", "CNAME", "MX"],
+        correct: "TXT"
+    },
+    {
+        question: "Which of the following is the most closely associated with segmenting compute resources within a single cloud account?",
+        options: ["Network security group", "IaaS", "VPC", "Hybrid cloud"],
+        correct: "VPC"
+    },
+    {
+        question: "Which of the following is the most likely function to be decremented when a tool is used to measure the distance between two locations on the internet?",
+        options: ["GRE", "TTL", "VPN", "QoS"],
+        correct: "TTL"
+    },
+    {
+        question: "A user's home mesh wireless network is experiencing latency issues. A technician has:\n• Performed a speed test.\n• Rebooted the devices.\n• Performed a site survey.\n• Performed a wireless packet capture.\nThe technician reviews the following information:\nSSID | MAC | RSSI | Channel\nHome | AAAAAA111112 | -83dBm | 11\nHome | AAAAAA111113 | -91dBm | 11\nHome | AAAAAA111114 | -70dBm | 11\nThe technician notices in the packet capture that frames were retransmitted. Which of the following is the most likely cause of the user's network issue?",
+        options: ["The SSIDs should not be the same.", "The network has too much overlap.", "The devices are incompatible with the mesh network.", "The nodes are underpowered."],
+        correct: "The network has too much overlap."
+    },
+    {
+        question: "A network engineer implements a 192.168.100.0/25 subnet for a building without obtaining sizing requirements. It is later determined that the building will house 700 people. Which of the following subnet masks will most efficiently support that number of people?",
+        options: ["255.255.252.0", "255.255.254.0", "255.255.255.0", "255.255.255.128"],
+        correct: "255.255.252.0"
+    },
+    {
+        question: "A company is building a new campus that will have wired and wireless devices. The network will be designed to support casual internet usage for guests and break rooms for employees. Which of the following authentication methods is best suited for guests given the requirements of this scenario?",
+        options: ["ESP", "PSK", "WPA", "IKE"],
+        correct: "PSK"
+    },
+    {
+        question: "Following the troubleshooting methodology, a technician implements a solution that resolves the reported issue. Which of the following should the technician do next?",
+        options: ["Document the findings.", "Create a plan of action.", "Establish a theory.", "Identify the problem."],
+        correct: "Document the findings."
+    },
+    {
+        question: "A network administrator needs to divide 192.168.1.0/24 into two equal halves. Which of the following subnet masks should the administrator use?",
+        options: ["255.255.0.0", "255.255.254.0", "255.255.255.0", "255.255.255.128"],
+        correct: "255.255.255.128"
+    },
+    {
+        question: "Which of the following protocols uses the Dijkstra's Link State Algorithm to establish routes inside its routing table?",
+        options: ["OSPF", "EIGRP", "BGP", "RIP"],
+        correct: "OSPF"
+    },
+    {
+        question: "Which of the following traffic types does a DHCP Discover request from a PC use?",
+        options: ["Broadcast", "Anycast", "Unicast", "Multicast"],
+        correct: "Broadcast"
+    },
+    {
+        question: "A user’s VoIP phone and workstation are connected through an inline cable. The user reports that the VoIP phone intermittently reboots, but the workstation is not having any network-related issues. Which of the following is the most likely cause?",
+        options: ["The PoE power budget is exceeded.", "Port security is violated.", "The signal is degraded.", "The Ethernet cable is not working."],
+        correct: "The PoE power budget is exceeded."
+    },
+    {
+        question: "A network administrator is installing a network for a small company. The switches will be installed in parallel to provide redundancy in case a specific device fails. Which of the following should be configured to prevent loops?",
+        options: ["Spanning tree", "CRC", "Jumbo frames", "Link aggregation"],
+        correct: "Spanning tree"
+    },
+    {
+        question: "A company’s network is experiencing high latency and packet loss during peak hours. Network monitoring tools show increased traffic on a switch. Which of the following should a network technician implement to reduce the network congestion and improve performance?",
+        options: ["Load balancing", "Port mirroring", "Quality of service", "Spanning Tree Protocol"],
+        correct: "Quality of service"
+    },
+    {
+        question: "Which of the following VPN types provides secure remote access to the network resources through a web portal?",
+        options: ["Proxy", "Clientless", "Site-to-site", "Direct connect"],
+        correct: "Clientless"
+    },
+    {
+        question: "Which of the following best explains the role of confidentiality with regard to data at rest?",
+        options: ["Data can be accessed by anyone on the administrative network.", "Data can be accessed remotely with proper training.", "Data can be accessed after privileged access is granted.", "Data can be accessed after verifying the hash."],
+        correct: "Data can be accessed after privileged access is granted."
+    },
+    {
+        question: "Several users in an organization report connectivity issues and lag during a video meeting. The network administrator performs a tcpdump and observes increased retransmissions for other non-video applications on the network. Which of the following symptoms describes the users' reported issues?",
+        options: ["Latency", "Packet loss", "Bottlenecking", "Jitter"],
+        correct: "Packet loss"
+    },
+    {
+        question: "An administrator enables DNS filtering on the firewall to block users from visiting malicious websites. Which of the following should the administrator also do? (Choose two.)",
+        options: ["Disable DoH in users’ internet browsers.", "Update NS record to point to DNS filter servers.", "Block port 443 to the malicious websites.", "Block port 53 to servers on the internet.", "Disable TLS v1.3 in users’ internet browsers.", "Implement DNSSEC for corporate records."],
+        correct: ["Disable DoH in users’ internet browsers.", "Implement DNSSEC for corporate records."]
+    },
+    {
+        question: "Which of the following is concerned with guaranteed availably of a cloud resource?",
+        options: ["IPAM", "SLA", "MTBF", "EOL"],
+        correct: "SLA"
+    },
+    {
+        question: "A network consultant needs to decide between running an Ethernet uplink or using the built-in 5GHz point-to-point functionality on a WAP. Which of the following documents provides the best information to assist the consultant with this decision?",
+        options: ["Site survey results", "Physical diagram", "Service-level agreement", "Logical diagram"],
+        correct: "Site survey results"
+    },
+    {
+        question: "While troubleshooting connectivity issues, a junior network administrator is given explicit instructions to test the host’s TCP/IP stack first. Which of the following commands should the network administrator run?",
+        options: ["ping 127.0.0.1", "ping 169.254.1.1", "ping 172.16.1.1", "ping 192.168.1.1"],
+        correct: "ping 127.0.0.1"
+    },
+    {
+        question: "Users at an organization report that the wireless network is not working in some areas of the building. Users report that other wireless network SSIDs are visible when searching for the network, but the organization’s network is not displayed. Which of the following is the most likely cause?",
+        options: ["Interference or channel overlap", "Insufficient wireless coverage", "Roaming misconfiguration", "Client disassociation issues"],
+        correct: "Insufficient wireless coverage"
+    },
+    {
+        question: "Which of the following panels would be best to facilitate a central termination point for all network cables on the floor of a company building?",
+        options: ["Patch", "UPS", "MDF", "Rack"],
+        correct: "Patch"
+    },
+    {
+        question: "Which of the following is most commonly associated with many systems sharing one IP address in the public IP-addressing space?",
+        options: ["PAT", "NAT", "VIP", "NAT64"],
+        correct: "PAT"
+    },
+    {
+        question: "A network administrator is reviewing a production web server and observes the following output from the netstat command:\nProto | Local Address | Foreign Address | State | PID\nTCP | 0.0.0.0:20 | 0.0.0.0:0 | LISTENING | 1308\nTCP | 0.0.0.0:21 | 0.0.0.0:0 | LISTENING | 293\nTCP | 0.0.0.0:22 | 0.0.0.0:0 | LISTENING | 756\nTCP | 0.0.0.0:25 | 0.0.0.0:0 | LISTENING | 143\nTCP | 0.0.0.0:80 | 0.0.0.0:0 | LISTENING | 482\nTCP | 0.0.0.0:110 | 0.0.0.0:0 | LISTENING | 43\nTCP | 0.0.0.0:143 | 0.0.0.0:0 | LISTENING | 43\nTCP | 0.0.0.0:443 | 0.0.0.0:0 | LISTENING | 43\nWhich of the following actions should the network administrator take to harden the security of the web server?",
+        options: ["Disable the unused ports.", "Enforce access control lists.", "Perform content filtering.", "Set up a screened subnet."],
+        correct: "Disable the unused ports."
+    },
+    {
+        question: "A network technician is examining the configuration on an access port and notices more than one VLAN has been set. Which of the following best describes how the port is configured?",
+        options: ["With a voice VLAN", "With too many VLAN", "With a default VLAN", "With a native VLAN"],
+        correct: "With a voice VLAN"
+    },
+    {
+        question: "A small company has the following IP addressing strategy:\nUser subnet: 192.168.1.0/24\nVoice subnet: 192.168.2.0/24\nServer subnet: 192.168.10.0/24\nA user is unable to connect to the company fileshare server located at 192.168.10.1. The user's networking configuration is:\nPhysical Address. . . . . . . . . : 7A-01-7A-21-01-50\nIPv4 Address. . . . . . . . . . . : 192.168.1.50\nSubnet Mask . . . . . . . . . . . : 255.255.255.128\nDefault Gateway . . . . . . . . . : 192.168.1.1\nDNS Servers . . . . . . . . . . . : 192.168.10.10\nWhich of the following will most likely correct the issue?",
+        options: ["Changing the IPv4 address to 192.168.10.1", "Changing the subnet mask to 255.255.255.0", "Changing the DNS servers to internet IPs", "Changing the physical address to 7A-01-7A-21-01-50"],
+        correct: "Changing the subnet mask to 255.255.255.0"
+    },
+    {
+        question: "A network administrator needs to connect a department to a new network segment. They need to use a DHCP server located on another network. Which of the following can the administrator use to complete this task?",
+        options: ["IP Helper", "Reservation", "Exclusion", "Scope"],
+        correct: "IP Helper"
+    },
+    {
+        question: "A network engineer is implementing a solution by which on-premises servers are migrated to a cloud service provider. Which of the following service models will provide a lift and shift solution to meet this requirement?",
+        options: ["Infrastructure as a service", "Infrastructure as code", "Software as a service", "Software-defined network"],
+        correct: "Infrastructure as a service"
+    },
+    {
+        question: "A network administrator is conducting an assessment and found network devices that do not meet standards. Which of the following configurations is considered a set of rules that devices should adhere to?",
+        options: ["Production", "Backup", "Candidate", "Golden"],
+        correct: "Golden"
+    },
+    {
+        question: "An IT department asks a newly hired employee to use a personal laptop until the company can provide one. Which of the following policies is most applicable to this situation?",
+        options: ["IAM", "BYOD", "DLP", "AUP"],
+        correct: "BYOD"
+    },
+    {
+        question: "Which of the following offers the ability to manage access at the cloud VM instance?",
+        options: ["Security group", "Internet gateway", "Direct Connect", "Network ACL"],
+        correct: "Security group"
+    },
+    {
+        question: "In an environment with one router, which of the following will allow a network engineer to communicate between VLANs without purchasing additional hardware?",
+        options: ["Subinterfaces", "VXLAN", "Layer 3 switch", "VIP"],
+        correct: "Subinterfaces"
+    },
+    {
+        question: "A network administrator is concerned with on-path attacks and wants to provide encryption of fully qualified domain names in outbound communications. Which of the following best describes the protocol that provides the proper security layer for internet communication?",
+        options: ["SSL", "DoH", "TLS", "DNSSEC"],
+        correct: "DoH"
+    },
+    {
+        question: "A network administrator wants to restrict inbound traffic to allow only HTTPS to the company website, denying all other inbound traffic from the internet. Which of the following would best accomplish this goal?",
+        options: ["ACL on the edge firewall", "Port security on an access switch", "Content filtering on a web gateway", "URL filtering on an outbound proxy"],
+        correct: "ACL on the edge firewall"
+    },
+    {
+        question: "A network engineer is deploying switches at a new remote office. The switches have been preconfigured with hostnames and STP priority values. Based on the following table:\nHostname | MAC address | STP Priority\ncore-sw01 | 0000.0000.005f | 4096\ndistribution-sw01 | 0000.0000.001a | 32768\naccess-sw01 | 0000.0000.005e | 4096\naccess-sw02 | 0000.0000.001b | 32768\nWhich of the following switches will become the root bridge?",
+        options: ["core-sw01", "access-sw01", "distribution-sw01", "access-sw02"],
+        correct: "access-sw01"
+    },
+    {
+        question: "Which of following must be implemented to securely connect a company’s headquarters with a branch location?",
+        options: ["Split-tunnel VPN", "Clientless VPN", "Full-tunnel VPN", "Site-to-site VPN"],
+        correct: "Site-to-site VPN"
+    },
+    {
+        question: "A network engineer needs to virtualize network services, including a router, at a remote branch location. Which of the following solutions meets the requirements?",
+        options: ["NFV", "VRF", "VLAN", "VPC"],
+        correct: "NFV"
+    },
+    {
+        question: "A group of users cannot connect to network resources. The technician runs ipconfig from one user's device and is able to ping the gateway shown from the command. Which of the following is most likely preventing the users from accessing network resources?",
+        options: ["VLAN hopping", "Rogue DHCP", "Distributed DoS", "Evil twin"],
+        correct: "Rogue DHCP"
+    },
+    {
+        question: "Which of the following disaster recovery concepts is calculated by dividing the total hours of operation by the total number of units?",
+        options: ["MTTR", "MTBF", "RPO", "RTO"],
+        correct: "MTBF"
+    },
+    {
+        question: "A network administrator has been monitoring the company’s servers to ensure that they are available. Which of the following should the administrator use for this task?",
+        options: ["Packet capture", "Data usage reports", "SNMP traps", "Configuration monitoring"],
+        correct: "SNMP traps"
+    },
+    {
+        question: "A network engineer is completing a wireless installation in a new building. A requirement is that all clients be able to automatically connect to the fastest supported network. Which of the following best supports this requirement?",
+        options: ["Enabling band steering", "Disabling the 5GHz SSID", "Adding a captive portal", "Configuring MAC filtering"],
+        correct: "Enabling band steering"
+    },
+    {
+        question: "A network technician notices a device is at EOL. For which of the following should the technician plan?",
+        options: ["Retrofitting", "Decommissioning", "Restarting", "Upgrading"],
+        correct: "Decommissioning"
+    },
+    {
+        question: "A company implements a video streaming solution that will play on all computers that have joined a particular group, but router ACLs are blocking the traffic. Which of the following is the most appropriate IP address that will be allowed in the ACL?",
+        options: ["127.0.0.1", "172.17.1.1", "224.0.0.1", "240.0.0.1"],
+        correct: "224.0.0.1"
+    },
+    {
+        question: "Which of the following are the best device-hardening techniques for network security? (Choose two.)",
+        options: ["Disabling unused ports", "Performing regular scanning of unauthorized devices", "Monitoring system logs for irregularities", "Enabling logical security such as SSO", "Changing default passwords", "Ensuring least privilege concepts are in place"],
+        correct: ["Disabling unused ports", "Changing default passwords"]
+    },
+    {
+        question: "Which of the following allows for the interception of traffic between the source and destination?",
+        options: ["Self-signed certificate", "VLAN hopping", "On-path attack", "Phishing"],
+        correct: "On-path attack"
+    },
+    {
+        question: "A company discovers on video surveillance recordings that an unauthorized person installed a rogue access point in its secure facility. Which of the following allowed the unauthorized person to do this?",
+        options: ["Evil twin", "Honeytrap", "Wardriving", "Tailgating"],
+        correct: "Tailgating"
+    },
+    {
+        question: "A secure communication link needs to be configured between data centers via the internet. The data centers are located in different regions. Which of the following is the best protocol for the network administrator to use?",
+        options: ["DCI", "GRE", "VXLAN", "IPSec"],
+        correct: "IPSec"
+    },
+    {
+        question: "Which of the following can be implemented to add an additional layer of security between a corporate network and network management interfaces?",
+        options: ["Jump box", "Console server", "API interface", "In-band management"],
+        correct: "Jump box"
+    },
+    {
+        question: "A network administrator performed upgrades on a server and installed a new NIC to improve performance. Following the upgrades, users are unable to reach the server. Which of the following is the most likely reason?",
+        options: ["The PoE power budget was exceeded.", "TX/RX was transposed.", "A port security violation occurred.", "An incorrect cable type was installed."],
+        correct: "A port security violation occurred."
+    },
+    {
+        question: "A junior network technician at a large company needs to create networks from a Class C address with 14 hosts per subnet. Which of the following numbers of host bits is required?",
+        options: ["One", "Two", "Three", "Four"],
+        correct: "Four"
+    },
+    {
+        question: "Which of the following is a company most likely enacting if an accountant for the company can only see the financial department's shared folders?",
+        options: ["General Data Protection Regulation", "Least privilege network access", "Acceptable use policy", "End user license agreement"],
+        correct: "Least privilege network access"
+    },
+    {
+        question: "Which of the following connector types would most likely be used to connect to an external antenna?",
+        options: ["BNC", "ST", "LC", "MPO"],
+        correct: "BNC"
+    },
+    {
+        question: "A company recently converted most of the office laptops to connect wirelessly to the corporate network. After a recent high-traffic malware attack, narrowing the event to a specific user was difficult because of the wireless configuration. Which of the following actions should the company take?",
+        options: ["Restrict users to the 5GHz frequency.", "Upgrade to a mesh network.", "Migrate from PSK to Enterprise.", "Implement WPA2 encryption."],
+        correct: "Migrate from PSK to Enterprise."
+    },
+    {
+        question: "Which of the following cloud service models most likely requires the greatest up-front expense by the customer when migrating a data center to the cloud?",
+        options: ["Infrastructure as a service", "Software as a service", "Platform as a service", "Network as a service"],
+        correct: "Infrastructure as a service"
+    },
+    {
+        question: "After providing a username and password, a user must input a passcode from a phone application. Which of the following authentication technologies is used in this example?",
+        options: ["SSO", "LDAP", "MFA", "SAML"],
+        correct: "MFA"
+    },
+    {
+        question: "Which of the following facilities is the best example of a warm site in the event of information system disruption?",
+        options: ["A combination of public and private loud services to restore data", "A partial infrastructure, software, and data on site", "A full electrical infrastructure in place, but no customer devices on site", "A full infrastructure in place, but no current data on site"],
+        correct: "A partial infrastructure, software, and data on site"
+    },
+    {
+        question: "Which of the following services runs on port 636?",
+        options: ["SMTP", "Syslog", "TFTP", "LDAPS"],
+        correct: "LDAPS"
+    },
+    {
+        question: "A company wants to implement data loss prevention by restricting user access to social media platforms and personal cloud storage on workstations. Which of the following types of filtering should the company deploy to achieve these goals?",
+        options: ["Port", "DNS", "MAC", "Content"],
+        correct: "Content"
+    },
+    {
+        question: "An organization is struggling to get effective coverage using the wireless network. The organization wants to implement a solution that will allow for continuous connectivity anywhere in the facility. Which of the following should the network administrator suggest to ensure the best coverage?",
+        options: ["Implementing additional ad hoc access points", "Providing more Ethernet drops for user connections", "Deploying a mesh network in the building", "Changing the current frequency of the Wi-Fi"],
+        correct: "Deploying a mesh network in the building"
+    },
+    {
+        question: "Which of the following protocols allows automatic routing failover for an active-passive firewall pair?",
+        options: ["EIGRP", "OSPF", "VRRP", "BGP"],
+        correct: "VRRP"
+    },
+    {
+        question: "Which of the following is a major difference between an IPS and IDS?",
+        options: ["An IPS needs to be installed in line with traffic and an IDS does not.", "An IPS is signature-based and an IDS is not.", "An IPS is less susceptible to false positives than an IDS.", "An IPS requires less administrative overhead than an IDS."],
+        correct: "An IPS needs to be installed in line with traffic and an IDS does not."
+    },
+    {
+        question: "Which of the following describes the best reason for using BGP?",
+        options: ["Preventing a loop within a LAN", "Improving reconvergence times", "Exchanging router updates with a different ISP", "Sharing routes with a Layer 3 switch"],
+        correct: "Exchanging router updates with a different ISP"
+    },
+    {
+        question: "Which of the following steps of the troubleshooting methodology comes after testing the theory to determine cause?",
+        options: ["Verity full system functionality.", "Document the findings and outcomes.", "Establish a plan of action.", "Identify the problem."],
+        correct: "Establish a plan of action."
+    },
+    {
+        question: "A network administrator installed a new VLAN to the network after a company added an additional floor to the office. Users are unable to obtain an IP address on the new VLAN, but ports on existing VLANs are working properly. Which of the following configurations should the administrator update?",
+        options: ["Scope size", "Address reservations", "Lease time", "IP helper"],
+        correct: "IP helper"
+    },
+    {
+        question: "A network engineer needs to add a boundary network to isolate and separate the internal network from the public-facing internet. Which of the following security defense solutions would best accomplish this task?",
+        options: ["Trusted zones", "URL filtering", "ACLs", "Screened subnet"],
+        correct: "Screened subnet"
+    },
+    {
+        question: "Which of the following can help prevent unauthorized modifications to hardware when designing an MDF closet?",
+        options: ["Lockable cabinets", "Uninterruptable power supply", "Port security", "Microsegmentation"],
+        correct: "Lockable cabinets"
+    },
+    {
+        question: "After installing a new 6E wireless router in a small office, a technician notices that some wireless devices are not able to achieve the rated speeds. Which of the following should the technician check to troubleshoot the issue? (Choose two.)",
+        options: ["Client device compatibility", "Back-end cabling", "Weather phenomena", "Voltage source requirements", "Interference levels", "Processing power"],
+        correct: ["Client device compatibility"]
+    },
+    {
+        question: "Which of the following routing protocols needs to have an autonomous system set in order to establish communication with neighbor devices?",
+        options: ["OSPF", "EIGRP", "FHRP", "RIP"],
+        correct: "EIGRP"
+    },
+    {
+        question: "An investment bank is seeking a DR backup solution. Which of the following provides the most cost-effective backup site?",
+        options: ["Hot", "Cold", "Cluster", "Warm"],
+        correct: "Cold"
+    },
+    {
+        question: "A firewall administrator is mapping a server's internal IP address to an external IP address for public use. Which of the following is the name of this function?",
+        options: ["NAT", "VIP", "PAT", "BGP"],
+        correct: "NAT"
+    },
+    {
+        question: "A network engineer is completing a new VoIP installation, but the phones cannot find the TFTP server to download the configuration files. Which of the following DHCP features would help the phone reach the TFTP server?",
+        options: ["Exclusions", "Lease time", "Options", "Scope"],
+        correct: "Options"
+    },
+    {
+        question: "Which of the following best represents north-south traffic?",
+        options: ["A connection between a computer and a public web server", "Data moving between a data center and a DR site", "Traffic between a production server and a backup server", "Routing updates between OSPF routers"],
+        correct: "A connection between a computer and a public web server"
+    },
+    {
+        question: "Which of the following provides an opportunity for an on-path attack?",
+        options: ["Phishing", "Dumpster diving", "Evil twin", "Tailgating"],
+        correct: "Evil twin"
+    },
+    {
+        question: "A company is configuring a network for a new site that will have 150 users. Within the next year, the site is expected to grow by ten uses. Each user will have two IP addresses, one computer, and one phone connected to the network. Which of the following classful IPv4 address ranges will be best-suited for the network?",
+        options: ["Class D", "Class B", "Class A", "Class C"],
+        correct: "Class B"
+    },
+    {
+        question: "A network administrator needs to assign IP addresses to a newly installed network. They choose 192.168.1.0/24 as their network address and need to create three subnets with 30 hosts on each subnet. Which of the following is a valid subnet mask that will meet the requirements?",
+        options: ["255.255.255.128", "255.255.255.192", "255.255.255.224", "255.255.255.240"],
+        correct: "255.255.255.224"
+    },
+    {
+        question: "The network engineering team needs to implement encryption within two separate buildings. Once the network is set up, users will need to authenticate using RADIUS in order to access internal resources. Which of the following wireless technologies should the team implement?",
+        options: ["Mesh", "Enterprise", "Ad hoc", "Point to point"],
+        correct: "Enterprise"
+    },
+    {
+        question: "A network engineer discovers network traffic that is sending confidential information to an unauthorized and unknown destination. Which of the following best describes the cause of this network traffic?",
+        options: ["Ransomware", "Darkware", "Malware", "Adware"],
+        correct: "Malware"
+    },
+    {
+        question: "A security administrator is looking for rogue servers on the network and would also like to determine which services are running on those servers. Which of the following software tools should the administrator use?",
+        options: ["tracert", "nmap", "netstat", "ping"],
+        correct: "nmap"
+    },
+    {
+        question: "A network administrator needs to secure SNMP access with authentication and encryption. Which of the following should the administrator use?",
+        options: ["SNMPv3", "SNMP community string", "SNMP ACL access group", "SNMPv2c"],
+        correct: "SNMPv3"
+    },
+    {
+        question: "A user’s desk has a workstation and an IP phone. The user is unable to browse the internet on the workstation, but the phone works. Which of the following configurations is required?",
+        options: ["Voice VLAN", "Native VLAN", "Data VLAN", "Trunk port"],
+        correct: "Data VLAN"
+    },
+    {
+        question: "A network technician is configuring the company's network 100Mbps port Layer 2 switches. The technician wants increased throughput for the uplinks between switches. The technician connects multiple redundant links between the switches. Which of the following should the technician configure?",
+        options: ["Spanning Tree Protocol", "Switch Virtual Interfaces", "Native VLAN", "First Hop Redundancy Protocol"],
+        correct: "Spanning Tree Protocol"
+    },
+    {
+        question: "Which of the following would most likely be utilized to implement encryption in transit when using HTTPS?",
+        options: ["SSH", "TLS", "SCADA", "RADIUS"],
+        correct: "TLS"
+    },
+    {
+        question: "Some of the 20 employees who use the wireless network report they are unable to access network resources even though the wireless network is available. An administrator recently made the following configuration changes to the wireless DHCP server:\n\nNetwork: 192.168.100.0\nMask: 255.255.255.240\nGateway: 192.168.100.1\n\nWhich of the following is the cause of this issue?",
+        options: ["Incorrect VLAN assignment", "Incorrect ACL configuration", "Incorrect subnet mask", "Incorrect default gateway"],
+        correct: "Incorrect subnet mask"
+    },
+    {
+        question: "Which of the following typically uses compromised systems that become part of a bot network?",
+        options: ["Evil twin attack", "DDoS attack", "XML injection", "Brute-force password attack"],
+        correct: "DDoS attack"
+    },
+    {
+        question: "Which of the following network ports is used when a client accesses an SFTP server?",
+        options: ["22", "80", "443", "3389"],
+        correct: "22"
+    },
+    {
+        question: "Two companies successfully merged. Following the merger, a network administrator identified a connection bottleneck. The newly formed company plans to acquire a high-end 40GB switch and redesign the network from a three-tier model to a collapsed core. Which of the following should the administrator do until the new devices are acquired?",
+        options: ["Implement the FHRP.", "Configure a route selection metric change.", "Install a load balancer.", "Enable link aggregation."],
+        correct: "Enable link aggregation."
+    },
+    {
+        question: "Which of the following is the step that a troubleshooter should take immediately after implementing a solution?",
+        options: ["Review lessons learned during the process.", "Establish a plan of action.", "Verify full system functionality.", "Document actions and outcomes."],
+        correct: "Verify full system functionality."
+    },
+    {
+        question: "Users can usually use RDP to connect to a terminal server with hostname TS19 that points to 10.0.100.19. However, users recently have been unable to connect to TS19. The technician pings 10.0.100.19 and gets an unreachable error. Which of the following is the most likely cause?",
+        options: ["The users are on the wrong subnet.", "The DHCP server renewed the lease.", "The IP address was not reserved.", "The hostname was changed."],
+        correct: "The IP address was not reserved."
+    },
+    {
+        question: "Which of the following is the OSI model layer that uses a connectionless protocol for packet delivery?",
+        options: ["Physical", "Network", "Transport", "Application"],
+        correct: "Network"
+    },
+    {
+        question: "A company experiences an incident involving a user who connects an unmanaged switch to the network. Which of the following technologies should the company implement to help avoid similar incidents without conducting an asset inventory?",
+        options: ["Screened subnet", "802.1X", "MAC filtering", "Port security"],
+        correct: "Port security"
+    },
+    {
+        question: "Which of the following are benefits of implementing MFA and SSO in an enterprise environment? (Choose two.)",
+        options: ["Eliminating the number of password resets", "Centralizing user account management activities", "Adding an extra layer of security against compromised credentials", "Reducing the overhead of security tokens", "Enforcing conditional access policies", "Leveraging threat feed information from external sources"],
+        correct: ["Centralizing user account management activities", "Adding an extra layer of security against compromised credentials"]
+    },
+    {
+        question: "Users report connectivity issues after a network switch is replaced. There are three separate subnets for users, voice, and servers. The users cannot reach the resources in the server subnet. Upon investigation, a separate voice switch has thousands of discarded packets, but no users report issues making or receiving calls. Which of the following is most likely the issue?",
+        options: ["Incorrect cable", "Port administratively disabled", "VLAN misconfiguration", "Duplex setting"],
+        correct: "VLAN misconfiguration"
+    },
+    {
+        question: "A network administrator needs to deploy a subnet using an IP address range that can support at least 260 devices with the fewest wasted addresses. Which of the following subnets should the administrator use?",
+        options: ["172.16.0.0/24", "172.25.2.0/23", "172.30.1.0/22", "172.33.0.0/21"],
+        correct: "172.25.2.0/23"
+    },
+    {
+        question: "Which of the following will allow secure, remote access to internal applications?",
+        options: ["VPN", "CDN", "SAN", "IDS"],
+        correct: "VPN"
+    },
+    {
+        question: "A junior network administrator gets a text message from a number posing as the domain registrar of the firm. The administrator is tricked into providing global administrator credentials. Which of the following attacks is taking place?",
+        options: ["DNS poisoning", "ARP spoofing", "Vishing", "Smishing"],
+        correct: "Smishing"
+    },
+    {
+        question: "A network engineer wants to implement a secure solution that provides authentication and encryption to gather and monitor logs within the company network. Which of the following tools will accomplish this task?",
+        options: ["Syslog", "RADIUS", "SNMPv3", "API"],
+        correct: "SNMPv3"
+    },
+    {
+        question: "A tourist attempts to access an online banking site on a mobile device while in a public place. Which of the following is the tourist most likely to experience?",
+        options: ["Vishing", "Tailgating", "Shoulder surfing", "Peripheral attack"],
+        correct: "Shoulder surfing"
+    },
+    {
+        question: "Which of the following is used to separate a corporate network into multiple logical networks?",
+        options: ["Load balancer", "VLAN", "CDN", "IPS"],
+        correct: "VLAN"
+    },
+    {
+        question: "A medical clinic recently configured a guest wireless network on the existing router. Since then, guests have been changing the music on the speaker system. Which of the following actions should the clinic take to prevent unauthorized access? (Choose two.)",
+        options: ["Isolate smart devices to their own network segment.", "Configure IPS to prevent guests from making changes.", "Install a new AP on the network.", "Set up a syslog server to log who is making changes.", "Change the default credentials.", "Configure GRE on the wireless router."],
+        correct: ["Isolate smart devices to their own network segment.", "Change the default credentials."]
+    },
+    {
+        question: "A network administrator needs to deploy a subnet using an IP address range that can support at least 260 devices with the fewest wasted addresses. Which of the following subnets should the administrator use?",
+        options: ["23", "53", "123", "443"],
+        correct: "23"
+    },
+    {
+        question: "Which of the following stages of the troubleshooting methodology involves considering multiple approaches?",
+        options: ["Verify full functionality.", "Implement the solution.", "Document the findings and actions.", "Establish a theory of probable cause."],
+        correct: "Establish a theory of probable cause."
+    },
+    {
+        question: "After a recent merger, a large number of alerts are coming in regarding extremely high utilization. Which of the following should be generated to help inform new alerting requirements?",
+        options: ["SLA", "Network diagram", "Baseline", "Heat map"],
+        correct: "Baseline"
+    },
+    {
+        question: "Which of the following is concerned with guaranteed availability of a cloud resource?",
+        options: ["IPAM", "SLA", "MTBF", "EOL"],
+        correct: "SLA"
+    },
+    {
+        question: "A technician is designing a cloud service solution that will accommodate the company's current size, compute capacity, and storage capacity. Which of the following cloud deployment models will fulfill these requirements?",
+        options: ["SaaS", "PaaS", "IaaS", "IaC"],
+        correct: "IaaS"
+    },
+    {
+        question: "A network administrator deploys several new desk phones and workstation cubicles. Each cubicle has one assigned switchport. The administrator runs the following commands:\n\nswitchport mode access\nswitchport voice vlan 69\n\nWith which of the following VLANs will the workstation traffic be tagged?",
+        options: ["Private VLAN", "Voice VLAN", "Native VLAN", "Data VLAN"],
+        correct: "Data VLAN"
+    },
+    {
+        question: "Which of the following is associated with avoidance, acceptance, mitigation, and transfer?",
+        options: ["Risk", "Exploit", "Threat", "Vulnerability"],
+        correct: "Risk"
+    },
+    {
+        question: "Several users report poor performance when accessing shared drives on a file server named File01. While troubleshooting the issue, the network administrator swaps the Ethernet connections between File01 and another server named File02. Shortly thereafter, users report issues with File02, but File01 is no longer an issue. Which of the following is most likely impacting performance?",
+        options: ["Port security", "Speed/duplex mismatch", "PoE power budget reduction", "Keep-alive beacon failure"],
+        correct: "Speed/duplex mismatch"
+    },
+    {
+        question: "A network technician is requesting a fiber patch cord with a connector that is round and twists to install. Which of the following is the proper name of this connector type?",
+        options: ["ST", "BNC", "SC", "LC"],
+        correct: "ST"
+    },
+    {
+        question: "A data center administrator is evaluating the use of jumbo frames within a storage environment. Which of the following describes the best reason to use jumbo frames in the storage environment?",
+        options: ["To reduce device overhead", "To report on the current root switch in the STP", "To improve routing convergence", "To increase drive throughput"],
+        correct: "To reduce device overhead"
+    },
+    {
+        question: "A network administrator needs to efficiently deploy 200 systems using RFC1918 addresses. Which of the following networks should the administrator use?",
+        options: ["10.10.10.0/8", "150.200.1.0/24", "192.168.1.0/24", "254.169.0.0/24"],
+        correct: "192.168.1.0/24"
+    },
+    {
+        question: "An administrator requests a certificate for the company's domain name. In order to prove ownership of the domain, the certificate authority asks the administrator to create a specific DNS record. Which of the following record types is required?",
+        options: ["SOA", "MX", "NS", "TXT"],
+        correct: "TXT"
+    },
+    {
+        question: "An organization has four departments that each need access to different resources that do not overlap. Which of the following should a technician configure in order to implement and assign an ACL?",
+        options: ["VLAN", "DHCP", "VPN", "STP"],
+        correct: "VLAN"
+    },
+    {
+        question: "A network analyst is installing a wireless network in a corporate environment. Employees are required to use their domain identities and credentials to authenticate and connect to the WLAN. Which of the following actions should the analyst perform on the AP to fulfill the requirements?",
+        options: ["Enable MAC security.", "Generate a PSK for each user.", "Implement WPS.", "Set up WPA3 protocol."],
+        correct: "Set up WPA3 protocol."
+    },
+    {
+        question: "A network administrator is configuring a wireless connection between two warehouses. Which of the following wireless network types would best accomplish this task?",
+        options: ["Ad hoc", "Infrastructure", "Point-to-point", "Mesh"],
+        correct: "Point-to-point"
+    },
+    {
+        question: "A network engineer is designing an internal network that needs to support both IPv4 and IPv6 routing. Which of the following routing protocols is capable of supporting both IPv4 and IPv6?",
+        options: ["OSPFv3", "RIPv2", "BGP", "EIGRP"],
+        correct: "EIGRP"
+    },
+    {
+        question: "While conducting a network audit, an administrator notices the spanning tree root in VLAN 300 does not match the configuration baseline, which could cause network outages due to spanning tree update failures. Which of the following should the administrator do to restore consistency?",
+        options: ["Change the designated port on the misconfigured switch to a root port.", "Change the root port to a listening port on the misconfigured switch.", "Change the blocked port of the misconfigured switch to a learning port.", "Increase the bridge ID/priority on the misconfigured switch."],
+        correct: "Increase the bridge ID/priority on the misconfigured switch."
+    },
+    {
+        question: "A network administrator needs to connect a multimode fiber cable from the MDF to the server room. The administrator connects the cable to Switch 2, but there is no link light. The administrator tests the fiber and finds it does not have any issues. Swapping the connection to Switch 1 in a working port is successful, but the swapped connection does not work on Switch 2. Which of the following should the administrator verify next?",
+        options: ["Fiber length", "Transceiver model", "Connector type", "Port speed"],
+        correct: "Transceiver model"
+    },
+    {
+        question: "Which of the following architecture types is most commonly associated with east-west traffic?",
+        options: ["Colocated VMs", "Hybrid cloud", "Client-server", "Hub and spoke"],
+        correct: "Colocated VMs"
+    },
+    {
+        question: "A company has been added to an unapproved list because of spam. The network administrator confirmed that a workstation was infected by malware. Which of the following processes did the administrator use to identify the root cause?",
+        options: ["Traffic analysis", "Availability monitoring", "Baseline metrics", "Network discovery"],
+        correct: "Traffic analysis"
+    },
+    {
+        question: "Which of the following actions happen during the first step of the troubleshooting methodology? (Choose two.)",
+        options: ["Question the obvious.", "Divide and conquer.", "Identify symptoms.", "Establish a theory.", "Use a top-to-bottom approach.", "Question users."],
+        correct: ["Identify symptoms.", "Question users."]
+    },
+    {
+        question: "Which of the following cable types allows the use of QSFP ports without requiring transceivers?",
+        options: ["Multimode", "Twinaxial", "RG11", "Category 6"],
+        correct: "Twinaxial"
+    },
+    {
+        question: "A network administrator determines that some switch ports have more errors present than expected. The administrator traces the cabling associated with these ports. Which of the following would most likely be causing the errors?",
+        options: ["Shielded conduit", "Plenum spaces", "Voltage transformers", "Hydraulic lifts"],
+        correct: "Voltage transformers"
+    },
+    {
+        question: "A network administrator is troubleshooting an issue with a user's IP address. Which of the following layers of the OSI model should be considered?",
+        options: ["Data link", "Network", "Session", "Presentation"],
+        correct: "Network"
+    },
+    {
+        question: "Which of the following will most likely allow a network administrator to work with current data after a disaster?",
+        options: ["Review backup tapes.", "Recover from cloud storage.", "Fail over to a hot site.", "Restore from a snapshot."],
+        correct: "Fail over to a hot site."
+    },
+    {
+        question: "A network technician is attempting to map networking devices. When logged in to the local switch, the technician uses LLDP and discovers only those devices that are connected directly to the switch. Which of the following should the technician perform to discover all the networking devices?",
+        options: ["Reconfigure the management IP addresses of the networking devices on the same subnet.", "Enable Spanning Tree Protocol to allow the switches on the network to be discovered.", "Log in to each of the connected networking devices and perform the process again.", "Upgrade the OS on the networking devices to the current version of LLDP."],
+        correct: "Log in to each of the connected networking devices and perform the process again."
+    },
+    {
+        question: "Which of the following can be used when a server at a remote site is physically unreachable?",
+        options: ["OOB management", "Crash cart", "Jump box", "Console"],
+        correct: "OOB management"
+    },
+    {
+        question: "Which of the following source control features allows an administrator to test a new configuration without changing the primary configuration?",
+        options: ["Central repository", "Conflict identification", "Branching", "Version control"],
+        correct: "Branching"
+    },
+    {
+        question: "A network engineer needs to change, update, and control APs remotely, with real-time visibility over HTTPS. Which of the following will best allow these actions?",
+        options: ["Web interface", "Command line", "SNMP console", "API gateway"],
+        correct: "API gateway"
+    },
+    {
+        question: "Which of the following is a location where a plenum cable is recommended?",
+        options: ["Frequently traveled areas", "Outdoor environments", "Inside conduits", "Airspaces above a ceiling"],
+        correct: "Airspaces above a ceiling"
+    },
+    {
+        question: "A customer calls the help desk to report issues connecting to the internet. The customer can reach a local database server. A technician goes to the site and examines the configuration:\n\nIP Address . . . . . . . . . . . . : 192.168.1.223\nSubnet Mask . . . . . . . . . . . : 255.255.255.192\nDefault Gateway . . . . . . . . . : 192.168.1.190\nDNS 1 . . . . . . . . . . . . . . . : 192.168.1.196\nDNS 2 . . . . . . . . . . . . . . . : 8.8.8.8\n\nWhich of the following is causing the user's issue?",
+        options: ["Incorrect DNS", "Unreachable gateway", "Failed root bridge", "Poor upstream routing"],
+        correct: "Unreachable gateway"
+    },
+    {
+        question: "A company recently implemented a videoconferencing system that utilizes large amounts of bandwidth. Users start reporting slow internet speeds and an overall decrease in network performance. Which of the following are most likely the causes of the network performance issues? (Choose two.)",
+        options: ["DNS misconfiguration", "Inadequate network security", "Malware or a virus", "Outdated software", "Incorrect QoS settings", "Network congestion"],
+        correct: ["Incorrect QoS settings", "Network congestion"]
+    },
+    {
+        question: "A technician needs to identify a computer on the network that is reportedly downloading unauthorized content. Which of the following should the technician use?",
+        options: ["Anomaly alerts", "Port mirroring", "Performance monitoring", "Packet capture"],
+        correct: "Packet capture"
+    },
+    {
+        question: "Which of the following troubleshooting steps would provide a change advisory board with the information needed to make a decision?",
+        options: ["Identify the problem.", "Develop a theory of probable cause.", "Test the theory to determine cause.", "Establish a plan of action."],
+        correct: "Establish a plan of action."
+    },
+    {
+        question: "Application software systems can no longer receive updates and security patches, and continuing to use the application software might expose the system to attacks. Which of the following best describes this scenario?",
+        options: ["SLA", "Licensing", "SIEM", "EOL"],
+        correct: "EOL"
+    },
+    {
+        question: "Which of the following technologies uses a VIP to provide gateway redundancy between two routers?",
+        options: ["LACP", "PAT", "FHRP", "BGP"],
+        correct: "FHRP"
+    },
+    {
+        question: "Which of the following is the best way to reduce the likelihood of electrostatic discharge?",
+        options: ["Uninterruptable power supply", "Surge protector", "Power distribution units", "Temperature and humidity control"],
+        correct: "Temperature and humidity control"
+    },
+    {
+        question: "Several unauthorized APs near the corporate headquarters are broadcasting similar SSIDs. Which of the following types of attacks is being described?",
+        options: ["Evil twin", "Wi-Fi jamming", "On-path", "Wardriving"],
+        correct: "Evil twin"
+    },
+    {
+        question: "SIMULATION - A network administrator receives a ticket stating there is a connectivity issue between the server and the storage devices. The administrator needs to identify any issues and implement the appropriate solutions. INSTRUCTIONS - Click on each access and core switch. Enter commands into the terminal to identify any problems and select the appropriate resolutions. Type help in each terminal to view a list of available commands. If at any time you would like to bring back the initial state of the simulation, please click the Reset All button.",
+        options: ["Simulation: Requires user interaction with terminals and dropdown menus."],
+        correct: "Simulation: Answer is determined by successfully diagnosing and resolving issues on virtual network devices within the simulation environment."
+    },
+    {
+        question: "A security engineer is trying to connect cameras to a 12-port PoE switch, but only eight cameras turn on. Which of the following should the engineer check first?",
+        options: ["Ethernet cable type", "Voltage", "Transceiver compatibility", "DHCP addressing"],
+        correct: "Voltage"
+    },
+    {
+        question: "A network administrator is setting up a firewall to protect the organization's network from external threats. Which of the following should the administrator consider first when configuring the firewall?",
+        options: ["Required ports, protocols, and services", "Inclusion of a deny all rule", "VPN access", "Outbound access originating from customer-facing servers"],
+        correct: "Required ports, protocols, and services"
+    },
+    {
+        question: "A network administrator is unable to ping a remote server from a newly connected workstation that has been added to the network. Ping to 127.0.0.1 on the workstation is failing. Which of the following should the administrator perform to diagnose the problem?",
+        options: ["Verify the NIC interface status.", "Verify the network is not congested.", "Verify the router is not dropping packets.", "Verify that DNS is resolving correctly."],
+        correct: "Verify the NIC interface status."
+    },
+    {
+        question: "A company is installing network cables above the ceiling tiles. The cables must be fire rated. Which of the following cable types should the company use?",
+        options: ["Coaxial", "Plenum", "Crossover", "STP"],
+        correct: "Plenum"
+    },
+    {
+        question: "A VoIP phone powers up, but it is unable to receive or place calls. After connecting to another switchport, the issue is resolved. Which of the following was most likely the issue with the previous port?",
+        options: ["The port had a half-duplex configuration.", "The port was in an error-disabled state.", "The port had an incorrect VLAN assignment.", "The port exceeded its PoE budget."],
+        correct: "The port had an incorrect VLAN assignment."
+    },
+    {
+        question: "A network administrator recently configured an autonomous wireless AP and performed a throughput test via comptiaspeedtester.com. The result was 75Mbps. When connected to other APs, the results reached 500Mbps. Which of the following is most likely the reason for this difference?",
+        options: ["Channel width configuration", "DNS server issues", "Authentication failure", "Incorrect DHCP settings"],
+        correct: "Channel width configuration"
+    },
+    {
+        question: "Which of the following technologies is most appropriate for a business that requires high-speed access to frequently used web content, such as images and videos?",
+        options: ["CDN", "SAN", "Firewall", "Switch"],
+        correct: "CDN"
+    },
+    {
+        question: "Which of the following should be included in an SLA?",
+        options: ["Patches and bug fixes", "Licensing", "Inventory management", "Stakeholders"],
+        correct: "Patches and bug fixes"
+    },
+    {
+        question: "A network administrator thinks a change was made to mail servers at comptia.org. Which of the following should the administrator execute to verify the change?",
+        options: ["ping www.comptia.org", "dig comptia.org ANY", "nslookup -type=ns coir.ptia.org", "tracert comptia.org"],
+        correct: "dig comptia.org ANY"
+    },
+    {
+        question: "A network technician receives a new ticket while working on another issue. The new ticket is critical to business operations. Which of the following documents should the technician reference to determine which ticket to complete first?",
+        options: ["NDA", "AUP", "SLA", "MOU"],
+        correct: "SLA"
+    },
+    {
+        question: "A network engineer is troubleshooting connectivity for a newly installed server on an existing VLAN. The engineer reviews the following requested output:\n\n[Placeholder for command output image]\n\nThe engineer then logs in to the router and runs the following:\n\n[Placeholder for command output image]\n\nWhich of the following describes the issue?",
+        options: ["The server has an incorrect subnet mask.", "There is a duplicate IP address on the network.", "The DHCP address pool is exhausted.", "The router is missing a default route."],
+        correct: "The server has an incorrect subnet mask."
+    },
+    {
+        question: "A network administrator installs new cabling to connect new computers and access points. After deploying the equipment, the administrator notices a few of the devices are not connecting properly. The administrator moves the devices to a different port, but it does not resolve the issue. Which of the following should the administrator verify next?",
+        options: ["Power budget", "Device requirements", "Port status", "Cable termination"],
+        correct: "Cable termination"
+    },
+    {
+        question: "Which of the following could provide a lightweight and private connection to a remote box?",
+        options: ["Site-to-site VPN", "Telnet", "Console", "Secure Shell"],
+        correct: "Secure Shell"
+    },
+    {
+        question: "Which of the following routing protocols is used on the internet?",
+        options: ["IGP", "EIGRP", "BGP", "OSPF"],
+        correct: "BGP"
+    },
+    {
+        question: "A server administrator deploys a new web server with an IP address of 192.168.16.100. The security policy dictates that all non-secure connection methods should be blocked. Which of the following security rules will satisfy the request without prohibiting other traffic?",
+        options: ["Deny any 192.168.16.0 255.255.255.0 80", "Deny 192.168.16.100 255.255.255.255 any", "Deny any 192.168.16.100 255.255.255.255 80", "Permit any 192.168.16.100 255.255.255.255 80", "Permit 192.168.16.100 255.255.255.255 any"],
+        correct: "Deny any 192.168.16.100 255.255.255.255 80"
+    },
+    {
+        question: "Which of the following protocol ports should be used to securely transfer a file?",
+        options: ["22", "69", "80", "3389"],
+        correct: "22"
+    },
+    {
+        question: "A company reports that their facsimile machine no longer has a dial tone when trying to send a fax. The phone cable is damaged on one end. Which of the following types of connectors should a technician replace?",
+        options: ["F-type", "RJ45", "SC", "RJ11"],
+        correct: "RJ11"
+    },
+    {
+        question: "A network technician is installing a new switch that does not support STP at the access layer of a network. The technician wants a redundant connection to the distribution switch. Which of the following should the technician use?",
+        options: ["Link aggregation", "Subinterfaces", "Switch virtual interfaces", "Half-duplex connections"],
+        correct: "Link aggregation"
+    },
+    {
+        question: "A company recently rearranged some users' workspaces and moved several users to previously used workspaces. The network administrator receives a report that all of the users who were moved are having connectivity issues. Which of the following is the most likely reason?",
+        options: ["Ports are error disabled.", "Ports have an incorrect native VLAN.", "Ports are having an MDIX issue.", "Ports are trunk ports."],
+        correct: "Ports are trunk ports."
+    },
+    {
+        question: "A newly opened retail shop uses a combination of new tablets, PCs, printers, and legacy card readers. Which of the following wireless encryption types is the most secure and compatible?",
+        options: ["WPA3", "WPA2", "WPA2 / WPA3 mixed mode", "WPA / WPA2 mixed mode"],
+        correct: "WPA2 / WPA3 mixed mode"
+    },
+    {
+        question: "A network administrator changed an external DNS to point customers to a new server. Which of the following tools should the administrator use to test the new server's configuration?",
+        options: ["ping", "tracert", "tcpdump", "nslookup"],
+        correct: "nslookup"
+    },
+    {
+        question: "A company is expanding to another floor in the same building. The network engineer configures a new switch with the same VLANs as the existing stack. When the network engineer connects the new switch to the existing stack, all users lose connectivity. Which of the following is the most likely reason?",
+        options: ["The new switch has unused ports disabled.", "The new switch does not have a default gateway.", "The new switch is connected to an access port.", "The new switch is in a spanning tree loop."],
+        correct: "The new switch is in a spanning tree loop."
+    },
+    {
+        question: "Which of the following is the most likely benefit of installing server equipment in a rack?",
+        options: ["Simplified troubleshooting process", "Decreased power consumption", "Improved network performance", "Increased compute density"],
+        correct: "Increased compute density"
+    },
+    {
+        question: "A technician is implementing a new SD-WAN device with a default configuration. The technician receives a URL via email and connects the new device to the internet to complete the installation. Which of the following is this an example of?",
+        options: ["Voice VLAN", "Native VLAN", "Data VLAN", "Trunk port"],
+        correct: "Data VLAN"
+    },
+    {
+        question: "A help desk technician receives a report that users cannot access internet URLs. The technician does some ping tests and finds that sites fail when a URL is used but work when an IP is used. Which of the following tools should the technician utilize next?",
+        options: ["tcpdump", "tracert", "nmap", "dig"],
+        correct: "dig"
+    },
+    {
+        question: "Which of the following is the part of a DR plan that identifies the critical systems that should be recovered first after an incident?",
+        options: ["RTO", "SLA", "MTBF", "SIEM"],
+        correct: "RTO"
+    },
+    {
+        question: "Which of the following is the best VPN to use for reducing data bandwidth requirements of the corporate network?",
+        options: ["Split-tunnel", "Site-to-site", "Full tunnel client", "GRE tunnel"],
+        correct: "Split-tunnel"
+    },
+    {
+        question: "An ISP provided a company with a pre-configured modem and five public static IP addresses. Which of the following does the company's firewall require to access the internet? (Choose two.)",
+        options: ["NTP server", "Default gateway", "The modem’s IP address", "One static IP address", "DNS servers", "DHCP server"],
+        correct: ["Default gateway", "One static IP address"]
+    },
+    {
+        question: "During a recent security assessment, an assessor attempts to obtain user credentials by pretending to be from the organization's help desk. Which of the following attacks is the assessor using?",
+        options: ["Social engineering", "Tailgating", "Shoulder surfing", "Smishing", "Evil twin"],
+        correct: "Social engineering"
+    },
+    {
+        question: "Which of the following dynamic routing protocols is used on the internet?",
+        options: ["EIGRP", "BGP", "RIP", "OSPF"],
+        correct: "BGP"
+    },
+    {
+        question: "A technician is implementing a new SD-VVAN device with a default configuration. The technician receives a URL via email and connects the new device to the internet to complete the installation. Which of the following is this an example of?",
+        options: ["SASE device installation", "Zero-touch provisioning", "Infrastructure as code", "Configuration management"],
+        correct: "Zero-touch provisioning"
+    },
+    {
+        question: "SIMULATION - A network technician needs to resolve some issues with a customer's SOHO network. The customer reports that some of the PCs are not connecting to the network, while others appear to be working as intended. INSTRUCTIONS - Troubleshoot all the network components. Review the cable test results first, then diagnose by clicking on the appropriate PC and server. Type help in each terminal to view a list of available commands. Identify any components with a problem and recommend a solution to correct each problem. If at any time you would like to bring back the initial state of the simulation, please click the Reset All button.",
+        options: ["Simulation: Requires user interaction with terminals and dropdown menus."],
+        correct: "Cable Test (Patch Cable between Switch 1 Gi0/5 and Switch 2): Problem discovered: Connector on backward. Solution: Replace cable\nServer 1: Problem discovered: Bad gateway address. Solution: Change gateway\nPC2: Problem discovered: Wrong VLAN. Solution: Change VLAN assignment\nPC3: Problem discovered: Bad subnet. Solution: Change the subnet mask\nPC1, PC4, PC5, PC6: No problem found"
+    },
+    {
+        question: "Which of the following would allow a network administrator to remotely access a secure subnet from a shared, secure workstation?",
+        options: ["Enable SSH through the firewall.", "Dial into an in-band modem.", "Connect through a jump host.", "Configure a site-to-site VPN."],
+        correct: "Connect through a jump host."
+    },
+    {
+        question: "Which of the following kinds of targeted attacks uses multiple computers or bots to request the same resource repeatedly?",
+        options: ["On-path", "DDoS", "ARP spoofing", "MAC flooding"],
+        correct: "DDoS"
+    },
+    {
+        question: "Which of the following is the most cost-effective way to safely expand outlet capacity in an IDF?",
+        options: ["PDU", "Surge protector", "UPS", "Power strip"],
+        correct: "PDU"
+    },
+    {
+        question: "A network administrator is creating a subnet that will include 45 separate hosts on a small private network within a large network architecture. Which of the following options is the most efficient use of network addresses when assigning this network?",
+        options: ["10.0.50.128/25", "10.7.142.128/27", "10.152.4.192/26", "10.192.1.64/28"],
+        correct: "10.152.4.192/26"
+    },
+    {
+        question: "A network technician is troubleshooting an issue between a web server and computers within a LAN. The technician needs to gather information about the IP addresses, protocols, and content of the traffic. Which of the following will best help the technician troubleshoot the issue?",
+        options: ["Flow data", "SNMP traps", "Packet capture", "Server logs"],
+        correct: "Packet capture"
+    },
+    {
+        question: "Which of the following OSI model layers can utilize a connectionless protocol for data transmission?",
+        options: ["Physical", "Network", "Transport", "Application"],
+        correct: "Transport"
+    },
+    {
+        question: "Which of the following layers in the OSI model is responsible for establishing, maintaining, and terminating connections between nodes?",
+        options: ["Physical", "Network", "Session", "Transport"],
+        correct: "Session"
+    },
+    {
+        question: "Which of the following protocols is commonly associated with TCP port 443?",
+        options: ["Telnet", "SMTP", "HTTPS", "SNMP"],
+        correct: "HTTPS"
+    },
+    {
+        question: "A network engineer configures the network settings in a new server as follows:\nIP address = 192.168.1.15\nSubnet mask = 255.255.255.0\nGateway = 192.168.1.255\nThe server can reach other hosts on the same subnet successfully, but it cannot reach hosts on different subnets. Which of the following is most likely configured incorrectly?",
+        options: ["Subnet mask", "Gateway", "Default route", "IP address"],
+        correct: "Gateway"
+    },
+    {
+        question: "A network administrator needs to implement a solution to filter access to the internet. Which of the following should the administrator most likely implement?",
+        options: ["Router", "Cloud gateway", "Proxy", "Intrusion detection system"],
+        correct: "Proxy"
+    },
+    {
+        question: "A user in the finance department reports that they cannot access the internet. Other finance department users are not having issues. A network administrator runs a route print command on the user's machine:\n\n[Table with IPv4 route table]\n\nWhich of the following is most likely the root cause of the issue?",
+        options: ["The default route is missing.", "The route metric value is incorrect.", "The interface is pointing to the localhost.", "The default gateway is configured with an incorrect subnet mask."],
+        correct: "The default route is missing."
+    },
+    {
+        question: "Which of the following explains what happens if a packet is lost in transit when using UDP?",
+        options: ["The data link layer will recognize the error and resend the packet.", "IP uses the TTL field to track packet hops and will resend the packet if necessary.", "If the sender does not receive a UDP acknowledgement, the packet will be resent.", "Some applications will recognize the loss and initiate a resend of the packet if necessary."],
+        correct: "Some applications will recognize the loss and initiate a resend of the packet if necessary."
+    },
+    {
+        question: "After a networking intern plugged in a switch, a significant number of the users in a building lost connectivity. Which of the following is the most likely root cause?",
+        options: ["VTP update", "Port security issue", "LLDP misconfiguration", "Native VLAN mismatch"],
+        correct: "VTP update"
+    },
+    {
+        question: "A network administrator upgraded the wireless access points and wants to implement a configuration that will give users higher speed and less channel overlap based on device compatibility. Which of the following will accomplish this goal?",
+        options: ["802.1X", "MIMO", "ESSID", "Band steering"],
+        correct: "Band steering"
+    },
+    {
+        question: "A technician is deploying new networking hardware for company branch offices. The bridge priority must be properly set. Which of the following should the technician configure?",
+        options: ["Spanning tree protocol", "Jumbo frames", "Perimeter network", "Port security"],
+        correct: "Spanning tree protocol"
+    },
+    {
+        question: "Which of the following should a company implement in order to share a single IP address among all the employees in the office?",
+        options: ["STP", "BGP", "PAT", "VXLAN"],
+        correct: "PAT"
+    },
+    {
+        question: "Which of the following is the greatest advantage of maintaining a cold DR site compared to other DR sites?",
+        options: ["Redundancy", "Availability", "Security", "Cost"],
+        correct: "Cost"
+    },
+    {
+        question: "A network engineer needs to deploy an access point at a remote office so that it will not communicate back to the wireless LAN controller. Which of the following deployment methods must the engineer use to accomplish this task?",
+        options: ["ESSID", "Lightweight", "Autonomous", "Ad hoc"],
+        correct: "Autonomous"
+    },
+    {
+        question: "A technician wants to experiment with NAC in a wireless environment. Which of the following NAC techniques should be implemented for wireless networking if ease of implementation is the most important factor?",
+        options: ["Port security", "EAPoL", "802.1X", "MAC filtering"],
+        correct: "MAC filtering"
+    },
+    {
+        question: "A junior network administrator is auditing the company network and notices incrementing input errors on a long-range microwave interface. Which of the following is the most likely reason for the errors?",
+        options: ["The parabolic signal is misaligned.", "The omnidirectional signal is being jammed.", "The omnidirectional signal is not strong enough to receive properly.", "The parabolic signal uses improper routing protocols."],
+        correct: "The parabolic signal is misaligned."
+    },
+    {
+        question: "A network administrator wants to update a geofencing policy to limit access to the corporate network based on location. Which of the following will the administrator most likely leverage?",
+        options: ["MAC filtering", "Administrative distance", "Bluetooth beacon signals", "IP address blocks"],
+        correct: "IP address blocks"
+    },
+    {
+        question: "Which of the following used to store and deliver content to clients in a geographically distributed manner using edge servers?",
+        options: ["Load balancer", "CDN", "DNS server", "SAN"],
+        correct: "CDN"
+    },
+    {
+        question: "Which of the following connectors allows a singular QSFP transceiver to have several physical connections?",
+        options: ["RJ45", "ST", "LC", "MPO"],
+        correct: "MPO"
+    },
+    {
+        question: "An organization is concerned about rogue devices connecting to the network and wants the network team to implement a solution. Which of the following types of filtering should the network team use to address this concern?",
+        options: ["MAC", "Content", "URL", "IP"],
+        correct: "MAC"
+    },
+    {
+        question: "A network administrator is redesigning a wireless network in which corporate and guest users share a single SSID that is configured with WPA2 PSK. Which of the following capabilities should be configured in order to improve security? (Choose two.)",
+        options: ["Wi-Fi Protected Access", "New SSID for contractors", "Password authentication", "Wired Equivalent Privacy", "Captive portal", "Wi-Fi Protected Setup"],
+        correct: ["New SSID for contractors", "Captive portal"]
+    },
+    {
+        question: "A network administrator is migrating the existing phone system to VoIP. The vendor requires a separate voice network for the phones to function. Which of the following technologies should the administrator use to allow for this configuration?",
+        options: ["VLAN", "VXLAN", "VPN", "VPC"],
+        correct: "VLAN"
+    },
+    {
+        question: "Computer A cannot reach Computer B in this network:\n\n[Diagram: Switch A connected to Computer A (172.16.210.16) via Gi0/1 access vlan 1, Gi0/9 and Gi0/10 access vlan 5 admin down. Switch B connected to Computer B (172.16.4.10/16) via Gi0/1 access vlan 1, Gi0/9 and Gi0/10 access vlan 5 admin down. Switches connected via Gi0/9 to Gi0/9 and Gi0/10 to Gi0/10.]\n\nWhich of the following will resolve the issue?",
+        options: ["Set up link aggregation between Switch A and Switch B on Gi0/9 and Gi0/10.", "Configure spanning tree on Switch A and Switch B.", "Establish a trunk connection between Switch A and Switch B.", "Put Computer A and Computer B in the same /24 subnet."],
+        correct: "Establish a trunk connection between Switch A and Switch B."
+    },
+    {
+        question: "Which of the following most directly secures sensitive information on a network?",
+        options: ["Data-in-transit encryption", "Principle of least privilege", "Role-based access controls", "Multifactor authentication"],
+        correct: "Data-in-transit encryption"
+    },
+    {
+        question: "A user is unable to reach a website and wants to verify its IP information. Which of the following tools is used to resolve the authoritative server to its FQDN?",
+        options: ["ipconfig", "arp", "nslookup", "ping"],
+        correct: "nslookup"
+    },
+    {
+        question: "Users in one building on the campus network report very slow network access. A network technician logs in to the router to see if there are any errors associated with traffic to and from that particular building. Which of the following commands will the technician most likely run?",
+        options: ["show arp", "show config", "show route", "show interface"],
+        correct: "show interface"
+    },
+    {
+        question: "Which of the following is enforced through legislation?",
+        options: ["AUP", "GDPR", "Code of conduct", "EULA"],
+        correct: "GDPR"
+    },
+    {
+        question: "Which of the following actions should be taken as part of the first step of the troubleshooting methodology?",
+        options: ["Conduct tests to verify ideas.", "Handle multiple problems individually.", "Create a theory about the possible root cause.", "Use a top-down approach."],
+        correct: "Handle multiple problems individually."
+    },
+    {
+        question: "After extremely high temperatures cause a power outage, the servers automatically shut down, even though the UPSs for the servers still have hours of battery life. Which of the following should a technician recommend?",
+        options: ["Include backup power for air-conditioning units.", "Configure door locks to automatically lock during power outages.", "Increase UPS battery size.", "Add an IoT-enabled thermostat."],
+        correct: "Include backup power for air-conditioning units."
+    },
+    {
+        question: "While deploying a new fleet of computers on a DHCP network, a network administrator notices that new computers cannot connect to the internet. Which of the following is most likely the problem?",
+        options: ["Incorrect default gateway", "Address pool exhaustion", "Duplicate IP address", "Incorrect subnet mask"],
+        correct: "Incorrect default gateway"
+    },
+    {
+        question: "A network technician is designing a LAN for a new facility. The company is expecting more than 300 devices to connect to the network. Which of the following masks will provide the most efficient subnet?",
+        options: ["255.255.0.0", "255.255.192.0", "255.255.254.0", "255.255.255.254"],
+        correct: "255.255.254.0"
+    },
+    {
+        question: "A network administrator received reports that a 40Gb connection is saturated. The only server the administrator can use for data collection in that location has a 10Gb connection to the network. Which of the following is the best method to use on the server to determine the source of the saturation?",
+        options: ["Port mirroring", "Log aggregation", "Flow data", "Packet capture"],
+        correct: "Flow data"
+    },
+    {
+        question: "A technician is alarmed after noticing more than 5,000 CRCs on a switchport. Which of the following should the technician do next?",
+        options: ["Move to a different switchport.", "Check for errdisable,", "Swap out the patch cable.", "Enable class-of-service."],
+        correct: "Swap out the patch cable."
+    },
+    {
+        question: "A network engineer runs ipconfig and notices that the default gateway is 0.0.0.0. Which of the following address types is in use?",
+        options: ["APIPA", "Multicast", "Class C", "Experimental"],
+        correct: "APIPA"
+    },
+    {
+        question: "A network administrator needs to deploy a new wireless solution at a customer site. All external users must provide credentials before being granted access to the wireless solution. Which of the following would best meet the requirements of this installation?",
+        options: ["Adjust the bands to be non-overlapping.", "Set up lightweight access points.", "Enable enterprise authentication.", "Add a captive portal for the guest network."],
+        correct: "Enable enterprise authentication."
+    },
+    {
+        question: "A network engineer adds a tunnel for a new branch network. Which of the following ensures that all data is encrypted inside the tunnel?",
+        options: ["ESP", "SSH", "GRE", "IKE"],
+        correct: "ESP"
+    },
+    {
+        question: "Which of the following routing technologies uses an attribute list for path selection?",
+        options: ["BGP", "RIP", "EIGRP", "OSPF"],
+        correct: "BGP"
+    },
+    {
+        question: "A network administrator is configuring a subnet that needs to support 13 usable IP addresses. Which of the following subnet masks best meets this requirement?",
+        options: ["255.255.255.128", "255.255.256.192", "255.285.256.224", "255.255.255.240"],
+        correct: "255.255.255.240"
+    },
+    {
+        question: "A systems administrator installs multiple web servers and intends to use the First Hop Redundancy Protocol to control routing to the servers. Which of the following types of IP addresses should the administrator use to support this routing approach?",
+        options: ["Virtual", "Gateway", "Static", "Dynamic"],
+        correct: "Virtual"
+    }
+        ];
+
+        // Shuffle array function
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Randomize question order
+        const shuffledQuestions = shuffle([...questions]);
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let total = shuffledQuestions.length;
+        let answered = 0;
+
+        const quizContainer = document.getElementById('quiz-container');
+        const nextButton = document.getElementById('next');
+        const scoreElement = document.getElementById('score');
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= total) {
+                quizContainer.innerHTML = '<h2>Quiz Completed!</h2>';
+                nextButton.style.display = 'none';
+                return;
+            }
+
+            const q = shuffledQuestions[currentQuestionIndex];
+            // Shuffle options
+            const shuffledOptions = shuffle([...q.options]);
+            const labels = ['A', 'B', 'C', 'D'];
+            const optionMap = {}; // To map labels to actual texts
+
+            let optionsHtml = '<ul class="options">';
+            shuffledOptions.forEach((opt, index) => {
+                const label = labels[index];
+                optionMap[label] = opt;
+                optionsHtml += `<li><button data-label="${label}">${label}: ${opt}</button></li>`;
+            });
+            optionsHtml += '</ul>';
+
+            quizContainer.innerHTML = `
+                <div class="question">
+                    <h2>${q.question}</h2>
+                    ${optionsHtml}
+                </div>
+            `;
+
+            // Find the correct label
+            const correctLabel = Object.keys(optionMap).find(key => optionMap[key] === q.correct);
+
+            const buttons = quizContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => handleAnswer(btn, correctLabel));
+            });
+
+            nextButton.style.display = 'none';
+            scoreElement.textContent = `Score: ${score} / ${total} | Question ${answered + 1}`;
+        }
+
+        function handleAnswer(selectedBtn, correctLabel) {
+            const selectedLabel = selectedBtn.dataset.label;
+            const isCorrect = selectedLabel === correctLabel;
+
+            // Highlight
+            const buttons = quizContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.label === correctLabel) {
+                    btn.classList.add('correct');
+                }
+                if (btn.dataset.label === selectedLabel && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (isCorrect) {
+                score++;
+            }
+
+            answered++;
+            scoreElement.textContent = `Score: ${score} / ${total}`;
+            nextButton.style.display = 'block';
+        }
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+
+        // Start the quiz
+        loadQuestion();
+    </script>
+</body>
+</html>
