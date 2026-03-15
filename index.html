@@ -16,14 +16,19 @@
         .correct { background: #d4edda; border: 1px solid #28a745; }
         .incorrect { background: #f8d7da; border: 1px solid #dc3545; }
         #score { font-weight: bold; }
-        #next { display: none; margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
-        #next:hover { background: #0056b3; }
+        #nextBtn { display: none; margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #nextBtn:hover { background: #0056b3; }
+
     </style>
 </head>
 <body>
     <h1>Quiz Game</h1>
-    <div id="quiz-container"></div>
-    <button id="next">Next Question</button>
+    <div id="quiz-container">
+    <div id="question" class="question"></div>
+    <div id="options" class="options"></div>
+    <div id="feedback"></div>
+    </div>
+    <button id="nextBtn">Next Question</button>
     <p id="score">Score: 0 / 0</p>
 
     <script>
