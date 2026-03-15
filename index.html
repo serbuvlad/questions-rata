@@ -13,6 +13,8 @@
         .options button:hover { background: #e0e0e0; }
         .options button.correct { background: #90ee90; }
         .options button.incorrect { background: #ffcccb; }
+        .correct { background: #d4edda; border: 1px solid #28a745; }
+        .incorrect { background: #f8d7da; border: 1px solid #dc3545; }
         #score { font-weight: bold; }
         #next { display: none; margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
         #next:hover { background: #0056b3; }
@@ -26,7 +28,7 @@
 
     <script>
         // Sample questions (you can add more)
-        const questions = [
+        const quizData = [
     {
         question: "Which of the following steps of the troubleshooting methodology would most likely include checking through each level of the OSI model after the problem has been identified?",
         options: ["Establish a theory.", "Implement the solution.", "Create a plan of action.", "Verify functionality."],
@@ -2109,98 +2111,200 @@
     }
         ];
 
-        // Shuffle array function
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const nextBtn = document.getElementById('nextBtn');
+    const scoreEl = document.getElementById('score');
+    
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+    
+    function shuffle(array) {
+        const copy = [...array];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
         }
-
-        // Randomize question order
-        const shuffledQuestions = shuffle([...questions]);
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let total = shuffledQuestions.length;
-        let answered = 0;
-
-        const quizContainer = document.getElementById('quiz-container');
-        const nextButton = document.getElementById('next');
-        const scoreElement = document.getElementById('score');
-
-        function loadQuestion() {
-            if (currentQuestionIndex >= total) {
-                quizContainer.innerHTML = '<h2>Quiz Completed!</h2>';
-                nextButton.style.display = 'none';
-                return;
-            }
-
-            const q = shuffledQuestions[currentQuestionIndex];
-            // Shuffle options
-            const shuffledOptions = shuffle([...q.options]);
-            const labels = ['A', 'B', 'C', 'D'];
-            const optionMap = {}; // To map labels to actual texts
-
-            let optionsHtml = '<ul class="options">';
+        return copy;
+    }
+    
+    function getCorrectAnswers(question) {
+        return Array.isArray(question.correct) ? question.correct : [question.correct];
+    }
+    
+    function updateScore() {
+        scoreEl.textContent = `Score: ${score} / ${quizData.length} | Question ${currentQuestion + 1} / ${quizData.length}`;
+    }
+    
+    function renderQuestion() {
+        answered = false;
+        feedbackEl.textContent = '';
+        nextBtn.style.display = 'none';
+    
+        const q = quizData[currentQuestion];
+        const correctAnswers = getCorrectAnswers(q);
+        const isMultiAnswer = correctAnswers.length > 1;
+    
+        questionEl.textContent = q.question;
+        optionsEl.innerHTML = '';
+    
+        const shuffledOptions = shuffle(q.options);
+    
+        if (isMultiAnswer) {
+            const list = document.createElement('div');
+    
             shuffledOptions.forEach((opt, index) => {
-                const label = labels[index];
-                optionMap[label] = opt;
-                optionsHtml += `<li><button data-label="${label}">${label}: ${opt}</button></li>`;
+                const id = `option-${currentQuestion}-${index}`;
+    
+                const wrapper = document.createElement('label');
+                wrapper.style.display = 'block';
+                wrapper.style.margin = '8px 0';
+                wrapper.style.cursor = 'pointer';
+    
+                wrapper.innerHTML = `
+                    <input type="checkbox" value="${escapeHtml(opt)}" style="margin-right: 8px;">
+                    ${escapeHtml(opt)}
+                `;
+    
+                list.appendChild(wrapper);
             });
-            optionsHtml += '</ul>';
-
-            quizContainer.innerHTML = `
-                <div class="question">
-                    <h2>${q.question}</h2>
-                    ${optionsHtml}
-                </div>
-            `;
-
-            // Find the correct label
-            const correctLabel = Object.keys(optionMap).find(key => optionMap[key] === q.correct);
-
-            const buttons = quizContainer.querySelectorAll('button');
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => handleAnswer(btn, correctLabel));
+    
+            const submitBtn = document.createElement('button');
+            submitBtn.textContent = 'Submit Answer';
+            submitBtn.style.marginTop = '12px';
+    
+            submitBtn.addEventListener('click', () => {
+                if (answered) return;
+    
+                const selected = Array.from(
+                    optionsEl.querySelectorAll('input[type="checkbox"]:checked')
+                ).map(input => input.value);
+    
+                if (selected.length === 0) {
+                    feedbackEl.textContent = 'Select at least one answer.';
+                    return;
+                }
+    
+                checkMultiAnswer(selected, correctAnswers);
             });
-
-            nextButton.style.display = 'none';
-            scoreElement.textContent = `Score: ${score} / ${total} | Question ${answered + 1}`;
+    
+            optionsEl.appendChild(list);
+            optionsEl.appendChild(submitBtn);
+        } else {
+            shuffledOptions.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.textContent = opt;
+                btn.dataset.option = opt;
+                btn.style.display = 'block';
+                btn.style.margin = '8px 0';
+                btn.style.width = '100%';
+    
+                btn.addEventListener('click', () => {
+                    if (answered) return;
+                    checkSingleAnswer(btn.dataset.option, correctAnswers[0]);
+                });
+    
+                optionsEl.appendChild(btn);
+            });
         }
-
-        function handleAnswer(selectedBtn, correctLabel) {
-            const selectedLabel = selectedBtn.dataset.label;
-            const isCorrect = selectedLabel === correctLabel;
-
-            // Highlight
-            const buttons = quizContainer.querySelectorAll('button');
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                if (btn.dataset.label === correctLabel) {
-                    btn.classList.add('correct');
-                }
-                if (btn.dataset.label === selectedLabel && !isCorrect) {
-                    btn.classList.add('incorrect');
-                }
-            });
-
-            if (isCorrect) {
-                score++;
+    
+        updateScore();
+    }
+    
+    function checkSingleAnswer(selectedOption, correctAnswer) {
+        answered = true;
+    
+        const buttons = optionsEl.querySelectorAll('button[data-option]');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+    
+            if (btn.dataset.option === correctAnswer) {
+                btn.classList.add('correct');
             }
-
-            answered++;
-            scoreElement.textContent = `Score: ${score} / ${total}`;
-            nextButton.style.display = 'block';
-        }
-
-        nextButton.addEventListener('click', () => {
-            currentQuestionIndex++;
-            loadQuestion();
+    
+            if (btn.dataset.option === selectedOption && selectedOption !== correctAnswer) {
+                btn.classList.add('incorrect');
+            }
         });
-
-        // Start the quiz
-        loadQuestion();
+    
+        if (selectedOption === correctAnswer) {
+            score++;
+            feedbackEl.textContent = 'Correct!';
+        } else {
+            feedbackEl.textContent = `Incorrect. Correct answer: ${correctAnswer}`;
+        }
+    
+        nextBtn.style.display = 'inline-block';
+        updateScore();
+    }
+    
+    function checkMultiAnswer(selectedAnswers, correctAnswers) {
+        answered = true;
+    
+        const selectedSet = new Set(selectedAnswers);
+        const correctSet = new Set(correctAnswers);
+    
+        const allCorrect =
+            selectedSet.size === correctSet.size &&
+            [...selectedSet].every(answer => correctSet.has(answer));
+    
+        const checkboxes = optionsEl.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(input => {
+            input.disabled = true;
+    
+            const label = input.parentElement;
+            const value = input.value;
+    
+            if (correctSet.has(value)) {
+                label.classList.add('correct');
+            }
+    
+            if (selectedSet.has(value) && !correctSet.has(value)) {
+                label.classList.add('incorrect');
+            }
+        });
+    
+        const submitBtn = optionsEl.querySelector('button');
+        if (submitBtn) submitBtn.disabled = true;
+    
+        if (allCorrect) {
+            score++;
+            feedbackEl.textContent = 'Correct!';
+        } else {
+            feedbackEl.textContent = `Incorrect. Correct answers: ${correctAnswers.join(', ')}`;
+        }
+    
+        nextBtn.style.display = 'inline-block';
+        updateScore();
+    }
+    
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+    
+    nextBtn.addEventListener('click', () => {
+        currentQuestion++;
+    
+        if (currentQuestion < quizData.length) {
+            renderQuestion();
+        } else {
+            questionEl.textContent = 'Quiz complete!';
+            optionsEl.innerHTML = '';
+            feedbackEl.textContent = `Final score: ${score} / ${quizData.length}`;
+            nextBtn.style.display = 'none';
+            scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
+        }
+    });
+    
+    renderQuestion();
     </script>
 </body>
 </html>
